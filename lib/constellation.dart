@@ -78,10 +78,20 @@ class ConstellationAnimation {
       }
     }
 
-    for (var line in lines) {
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
       var firstStar = stars[line.start];
+      var secondStar = stars[line.end];
       if (firstStar.fill == 1 && !line.shouldFill) {
         line.shouldFill = true;
+      }
+      if(secondStar.fill == 1){
+        var oppositeLine = lines.firstWhere((element) => element.start == line.end && element.end == line.start, orElse: () {
+          var l = AnimationLine(line.end, line.start);
+          lines.add(l);
+          return l;
+        });
+        oppositeLine.shouldFill = true;
       }
       if (line.shouldFill) {
         line.fill = min(line.fill + 1 / 60, 1);
@@ -89,6 +99,7 @@ class ConstellationAnimation {
           var secondStar = stars[line.end];
           if(!secondStar.shouldFill){
             secondStar.shouldFill = true;
+            secondStar.fill = 0.35;
           }
         }
       }

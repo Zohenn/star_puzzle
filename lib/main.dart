@@ -46,11 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     loadImage();
 
-    Future.delayed(Duration(milliseconds: 200), startAnimation);
+    // Future.delayed(Duration(milliseconds: 200), startAnimation);
   }
 
   Future<void> loadImage() async {
-    ByteData bd = await rootBundle.load("assets/wood.jpg");
+    ByteData bd = await rootBundle.load("assets/wood5.jpg");
 
     final Uint8List bytes = Uint8List.view(bd.buffer);
 
@@ -95,8 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Container(
                 height: 300,
                 width: 300,
-                decoration:
-                    BoxDecoration(border: Border.all(), image: DecorationImage(image: AssetImage('assets/wood.jpg'))),
+                decoration: BoxDecoration(border: Border.all()),
                 child: CustomPaint(
                   painter: ConstellationPainter(leo, image),
                   foregroundPainter: ConstellationAnimationPainter(constellationAnimation),
@@ -113,6 +112,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 child: Text('Reset'),
               ),
+              TextButton(
+                onPressed: () {
+                  constellationAnimation = ConstellationAnimation.from(leo);
+                  setState(() {});
+                },
+                child: Text('Clear'),
+              ),
+              TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
               // Container(
               //   height: 150,
               //   width: 150,
@@ -151,11 +158,22 @@ class ConstellationPainter extends CustomPainter {
   final Constellation constellation;
   final ui.Image? image;
 
+  static const starSize = 0.03;
+
+  static double get starShadowWidth => starSize * 0.25;
+
+  static double get lineSize => starSize * 0.75;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
       canvas.drawImageRect(
-          image!, Offset.zero & Size(image!.width.toDouble(), image!.height.toDouble()), Offset.zero & size, Paint());
+        image!,
+        Offset(image!.width.toDouble() / 4, image!.width.toDouble() / 4) &
+            Size(image!.width.toDouble() / 2, image!.height.toDouble() / 2),
+        Offset.zero & size,
+        Paint()..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate),
+      );
     }
 
     canvas.saveLayer(
@@ -164,14 +182,14 @@ class ConstellationPainter extends CustomPainter {
           ..color = Colors.white
           ..blendMode = BlendMode.softLight);
 
-    final starPaint = Paint()..color = Color(0xff222222);
+    final starPaint = Paint()..color = Color(0xff000000);
     for (var star in constellation.stars) {
-      canvas.drawCircle(star.pos.toOffset(size), size.width / 50, starPaint);
+      canvas.drawCircle(star.pos.toOffset(size), size.width * starSize, starPaint);
     }
 
     final linePaint = Paint()
-      ..color = Color(0xff222222)
-      ..strokeWidth = size.width / 75;
+      ..color = Color(0xff000000)
+      ..strokeWidth = size.width * lineSize;
     for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
       var secondStar = constellation.stars[line.end];
@@ -179,6 +197,48 @@ class ConstellationPainter extends CustomPainter {
         firstStar.pos.toOffset(size),
         secondStar.pos.toOffset(size),
         linePaint,
+      );
+    }
+
+    canvas.restore();
+
+    final starShadowPaint = Paint()
+      ..color = Color(0x80000000)
+      ..strokeWidth = size.width * starShadowWidth
+      ..style = PaintingStyle.stroke;
+    for (var star in constellation.stars) {
+      canvas.drawCircle(
+          star.pos.toOffset(size), size.width * starSize - size.width * starShadowWidth / 2, starShadowPaint);
+    }
+
+    canvas.saveLayer(Offset.zero & size, Paint());
+
+    final lineShadowPaint = Paint()
+      ..color = Color(0x80000000)
+      ..strokeWidth = size.width * lineSize
+      ..style = PaintingStyle.stroke;
+    for (var line in constellation.lines){
+      var firstStar = constellation.stars[line.start];
+      var secondStar = constellation.stars[line.end];
+      canvas.drawLine(
+        firstStar.pos.toOffset(size),
+        secondStar.pos.toOffset(size),
+        lineShadowPaint,
+      );
+    }
+
+    final lineShadowErasePaint = Paint()
+      ..color = Color(0x80000000)
+      ..strokeWidth = size.width * lineSize - size.width * starShadowWidth * 2
+      ..style = PaintingStyle.stroke
+      ..blendMode = BlendMode.clear;
+    for (var line in constellation.lines){
+      var firstStar = constellation.stars[line.start];
+      var secondStar = constellation.stars[line.end];
+      canvas.drawLine(
+        firstStar.pos.toOffset(size),
+        secondStar.pos.toOffset(size),
+        lineShadowErasePaint,
       );
     }
 
@@ -198,14 +258,14 @@ class ConstellationAnimationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final starPaint = Paint()..color = Colors.white;
+    final starPaint = Paint()..color = Color(0xffFFF7D5);
     for (var star in constellation.stars) {
-      canvas.drawCircle(star.pos.toOffset(size), size.width / 50 * star.fill, starPaint);
+      canvas.drawCircle(star.pos.toOffset(size), size.width * ConstellationPainter.starSize * star.fill, starPaint);
     }
 
     final linePaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = size.width / 75
+      ..color = Color(0xffFFF7D5)
+      ..strokeWidth = size.width * ConstellationPainter.lineSize
       ..strokeCap = StrokeCap.round;
     for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
