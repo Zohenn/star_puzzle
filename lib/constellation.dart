@@ -71,10 +71,17 @@ class ConstellationAnimation {
     );
   }
 
-  bool tick() {
+  double lineLength(Line line) {
+    var firstStar = stars[line.start];
+    var secondStar = stars[line.end];
+    return sqrt(pow(firstStar.pos.x - secondStar.pos.x, 2) + pow(firstStar.pos.y - secondStar.pos.y, 2));
+  }
+
+  bool tick(int delta) {
+    final animationSpeed = delta / 400;
     for (var star in stars) {
       if (star.shouldFill) {
-        star.fill = min(star.fill + 1 / 60, 1);
+        star.fill = min(star.fill + animationSpeed, 1);
       }
     }
 
@@ -94,7 +101,7 @@ class ConstellationAnimation {
         oppositeLine.shouldFill = true;
       }
       if (line.shouldFill) {
-        line.fill = min(line.fill + 1 / 60, 1);
+        line.fill = min(line.fill + animationSpeed * (1 - lineLength(line)), 1);
         if(line.fill == 1){
           var secondStar = stars[line.end];
           if(!secondStar.shouldFill){

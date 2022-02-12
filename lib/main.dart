@@ -39,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ui.Image? image;
   ConstellationAnimation constellationAnimation = ConstellationAnimation.from(leo);
   late Ticker ticker;
+  int previousTime = 0;
 
   @override
   void initState() {
@@ -46,11 +47,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     loadImage();
 
-    // Future.delayed(Duration(milliseconds: 200), startAnimation);
+    Future.delayed(Duration(milliseconds: 200), startAnimation);
   }
 
   Future<void> loadImage() async {
-    ByteData bd = await rootBundle.load("assets/wood5.jpg");
+    ByteData bd = await rootBundle.load("assets/wood_light.jpg");
 
     final Uint8List bytes = Uint8List.view(bd.buffer);
 
@@ -63,15 +64,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void startAnimation() {
     constellationAnimation.stars.first.shouldFill = true;
-    ticker = Ticker((d) {
-      var finished = constellationAnimation.tick();
+    ticker = Ticker((elapsed) {
+      var finished = constellationAnimation.tick(elapsed.inMilliseconds - previousTime);
+      previousTime = elapsed.inMilliseconds;
       if (!finished) {
         setState(() {});
       } else {
         ticker.stop();
       }
     });
-    ticker.start();
+    // ticker.start();
   }
 
   @override
@@ -107,6 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   constellationAnimation = ConstellationAnimation.from(leo);
                   constellationAnimation.stars.first.shouldFill = true;
                   if (!ticker.isTicking) {
+                    previousTime = 0;
                     ticker.start();
                   }
                 },
@@ -167,13 +170,66 @@ class ConstellationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
-      canvas.drawImageRect(
-        image!,
-        Offset(image!.width.toDouble() / 4, image!.width.toDouble() / 4) &
-            Size(image!.width.toDouble() / 2, image!.height.toDouble() / 2),
-        Offset.zero & size,
-        Paint()..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate),
-      );
+      // canvas.drawImageRect(
+      //   image!,
+      //   Offset(image!.width.toDouble() / 4, image!.width.toDouble() / 4) &
+      //       Size(image!.width.toDouble() / 2, image!.height.toDouble() / 2),
+      //   Offset.zero & size,
+      //   Paint()
+      //     ..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate),
+      // );
+      final pieceSize = size / 3;
+      for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 3; j++) {
+          canvas.saveLayer(Offset.zero & size, Paint());
+          // final path = Path();
+          // path.addRRect(RRect.fromRectAndRadius(Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize, Radius.circular(6)));
+          // canvas.clipPath(path);
+          var r = Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize;
+          canvas.drawImageRect(
+            image!,
+            Offset.zero & Size(image!.width.toDouble(), image!.height.toDouble()),
+            Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize,
+            Paint()
+              // ..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate)
+              ..strokeWidth = 1
+              ..color = Colors.black,
+          );
+          var path = Path();
+          path.moveTo(r.left, r.bottom);
+          path.lineTo(r.left + 2, r.bottom - 2);
+          path.lineTo(r.right - 2, r.bottom - 2);
+          path.lineTo(r.right, r.bottom);
+          path.close();
+          path.moveTo(r.left, r.top);
+          path.lineTo(r.left + 2, r.top + 2);
+          path.lineTo(r.left + 2, r.bottom - 2);
+          path.lineTo(r.left, r.bottom);
+          path.close();
+          path.moveTo(r.right, r.top);
+          path.lineTo(r.right - 2, r.top + 2);
+          path.lineTo(r.right - 2, r.bottom - 2);
+          path.lineTo(r.right, r.bottom);
+          path.close();
+          canvas.drawPath(
+              path,
+              Paint()
+                ..color = Color(0xa0000000)
+                ..blendMode = BlendMode.softLight);
+          canvas.restore();
+          path.reset();
+          path.moveTo(r.left, r.top);
+          path.lineTo(r.left + 2, r.top + 2);
+          path.lineTo(r.right - 2, r.top + 2);
+          path.lineTo(r.right, r.top);
+          path.close();
+          canvas.drawPath(
+              path,
+              Paint()
+                ..color = Color(0x60ffffff)
+                ..blendMode = BlendMode.hardLight);
+        }
+      }
     }
 
     canvas.saveLayer(
@@ -202,6 +258,8 @@ class ConstellationPainter extends CustomPainter {
 
     canvas.restore();
 
+    canvas.saveLayer(Offset.zero & size, Paint());
+
     final starShadowPaint = Paint()
       ..color = Color(0x80000000)
       ..strokeWidth = size.width * starShadowWidth
@@ -211,13 +269,11 @@ class ConstellationPainter extends CustomPainter {
           star.pos.toOffset(size), size.width * starSize - size.width * starShadowWidth / 2, starShadowPaint);
     }
 
-    canvas.saveLayer(Offset.zero & size, Paint());
-
     final lineShadowPaint = Paint()
       ..color = Color(0x80000000)
       ..strokeWidth = size.width * lineSize
       ..style = PaintingStyle.stroke;
-    for (var line in constellation.lines){
+    for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
       var secondStar = constellation.stars[line.end];
       canvas.drawLine(
@@ -227,12 +283,20 @@ class ConstellationPainter extends CustomPainter {
       );
     }
 
+    final starShadowErasePaint = Paint()
+      ..color = Color(0x80000000)
+      ..blendMode = BlendMode.clear;
+    for (var star in constellation.stars) {
+      canvas.drawCircle(
+          star.pos.toOffset(size), size.width * starSize - size.width * starShadowWidth, starShadowErasePaint);
+    }
+
     final lineShadowErasePaint = Paint()
       ..color = Color(0x80000000)
       ..strokeWidth = size.width * lineSize - size.width * starShadowWidth * 2
       ..style = PaintingStyle.stroke
       ..blendMode = BlendMode.clear;
-    for (var line in constellation.lines){
+    for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
       var secondStar = constellation.stars[line.end];
       canvas.drawLine(
