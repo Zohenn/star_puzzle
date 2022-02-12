@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Container(
                 height: 300,
                 width: 300,
-                decoration: BoxDecoration(border: Border.all()),
+                // decoration: BoxDecoration(border: Border.all()),
                 child: CustomPaint(
                   painter: ConstellationPainter(leo, image),
                   foregroundPainter: ConstellationAnimationPainter(constellationAnimation),
@@ -182,9 +182,9 @@ class ConstellationPainter extends CustomPainter {
       for (var i = 0; i < 3; i++) {
         for (var j = 0; j < 3; j++) {
           canvas.saveLayer(Offset.zero & size, Paint());
-          // final path = Path();
-          // path.addRRect(RRect.fromRectAndRadius(Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize, Radius.circular(6)));
-          // canvas.clipPath(path);
+          // final clipPath = Path();
+          // clipPath.addRRect(RRect.fromRectAndRadius(Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize, Radius.circular(6)));
+          // canvas.clipPath(clipPath);
           var r = Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize;
           canvas.drawImageRect(
             image!,
@@ -195,20 +195,21 @@ class ConstellationPainter extends CustomPainter {
               ..strokeWidth = 1
               ..color = Colors.black,
           );
+          var shadowWidth = 2;
           var path = Path();
           path.moveTo(r.left, r.bottom);
-          path.lineTo(r.left + 2, r.bottom - 2);
-          path.lineTo(r.right - 2, r.bottom - 2);
+          path.lineTo(r.left + shadowWidth, r.bottom - shadowWidth);
+          path.lineTo(r.right - shadowWidth, r.bottom - shadowWidth);
           path.lineTo(r.right, r.bottom);
           path.close();
           path.moveTo(r.left, r.top);
-          path.lineTo(r.left + 2, r.top + 2);
+          path.lineTo(r.left + shadowWidth, r.top + shadowWidth);
           path.lineTo(r.left + 2, r.bottom - 2);
           path.lineTo(r.left, r.bottom);
           path.close();
           path.moveTo(r.right, r.top);
-          path.lineTo(r.right - 2, r.top + 2);
-          path.lineTo(r.right - 2, r.bottom - 2);
+          path.lineTo(r.right - shadowWidth, r.top + shadowWidth);
+          path.lineTo(r.right - shadowWidth, r.bottom - shadowWidth);
           path.lineTo(r.right, r.bottom);
           path.close();
           canvas.drawPath(
@@ -219,8 +220,8 @@ class ConstellationPainter extends CustomPainter {
           canvas.restore();
           path.reset();
           path.moveTo(r.left, r.top);
-          path.lineTo(r.left + 2, r.top + 2);
-          path.lineTo(r.right - 2, r.top + 2);
+          path.lineTo(r.left + shadowWidth, r.top + shadowWidth);
+          path.lineTo(r.right - shadowWidth, r.top + shadowWidth);
           path.lineTo(r.right, r.top);
           path.close();
           canvas.drawPath(
