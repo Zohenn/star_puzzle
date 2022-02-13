@@ -38,6 +38,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   ui.Image? image;
+  ui.Image? renderedImage;
   ConstellationAnimation constellationAnimation = ConstellationAnimation.from(leo);
   late Ticker ticker;
   int previousTime = 0;
@@ -61,7 +62,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final ui.Image _image = (await codec.getNextFrame()).image;
 
-    setState(() => image = _image);
+    ui.PictureRecorder recorder = ui.PictureRecorder();
+    Canvas canvas = Canvas(recorder);
+    final backgroundPainter = ConstellationBackgroundPainter(_image, containerKey);
+    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation);
+    final size = containerKey.currentContext!.size!;
+    // final size = Size(900, 900);
+    backgroundPainter.paint(canvas, size);
+    foregroundPainter.paint(canvas, size);
+    final _renderedImage = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
+
+    setState(() {
+      image = _image;
+      renderedImage = _renderedImage;
+    });
   }
 
   void startAnimation() {
@@ -105,10 +119,38 @@ class _MyHomePageState extends State<MyHomePage> {
                   key: containerKey,
                   height: 300,
                   width: 300,
-                  // decoration: BoxDecoration(border: Border.all()),
-                  child: CustomPaint(
-                    painter: ConstellationPainter(leo, image, containerKey),
-                    foregroundPainter: ConstellationAnimationPainter(constellationAnimation),
+                  // child: CustomPaint(
+                  //   painter: ConstellationBackgroundPainter(image, containerKey),
+                  //   foregroundPainter: ConstellationAnimationPainter(constellationAnimation),
+                  // ),
+                  child: Stack(
+                    children: [
+                      for (var i = 0; i < 3; i++)
+                        for (var j = 0; j < 3; j++)
+                          Positioned(
+                            top: i * 100,
+                            left: j * 100,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              padding: const EdgeInsets.all(1.0),
+                              child: CustomPaint(
+                                painter: PiecePainter(renderedImage, i, j),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Text('${i * 3 + j + 1}', style: TextStyle(color: Colors.white.withOpacity(0.2))),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 16),
@@ -131,30 +173,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text('Clear'),
                 ),
                 TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
-                // Container(
-                //   height: 150,
-                //   width: 150,
-                //   clipBehavior: Clip.hardEdge,
-                //   decoration: BoxDecoration(),
-                //   child: Transform.scale(
-                //       scale: 25,
-                //       child: Image.asset(
-                //         'assets/wood.jpg',
-                //         filterQuality: FilterQuality.high,
-                //       )),
-                // ),
-                // Container(
-                //   height: 100,
-                //   width: 100,
-                //   clipBehavior: Clip.hardEdge,
-                //   decoration: BoxDecoration(),
-                //   child: Transform.scale(
-                //       scale: 1,
-                //       child: Image.asset(
-                //         'assets/wood_small.jpg',
-                //         filterQuality: FilterQuality.high,
-                //       )),
-                // ),
               ],
             ),
           ),
@@ -164,89 +182,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class ConstellationPainter extends CustomPainter {
-  ConstellationPainter(this.constellation, this.image, this.containerKey);
+class ConstellationBackgroundPainter extends CustomPainter {
+  ConstellationBackgroundPainter(this.image, this.containerKey);
 
-  final Constellation constellation;
   final ui.Image? image;
   final GlobalKey containerKey;
 
-  final starPathSize = Size(12, 12);
-
-  static const starSize = 0.03;
-
-  static double get starShadowWidth => starSize * 0.25;
-
-  static double get lineSize => starSize * 0.75;
-
-  Offset sizeToOffset(Size size) => Offset(size.width, size.height);
-
   @override
   void paint(Canvas canvas, Size size) {
-    // if (image != null) {
-    //   // canvas.drawImageRect(
-    //   //   image!,
-    //   //   Offset(image!.width.toDouble() / 4, image!.width.toDouble() / 4) &
-    //   //       Size(image!.width.toDouble() / 2, image!.height.toDouble() / 2),
-    //   //   Offset.zero & size,
-    //   //   Paint()
-    //   //     ..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate),
-    //   // );
-    //   final pieceSize = size / 3;
-    //   for (var i = 0; i < 3; i++) {
-    //     for (var j = 0; j < 3; j++) {
-    //       canvas.saveLayer(Offset.zero & size, Paint());
-    //       // final clipPath = Path();
-    //       // clipPath.addRRect(RRect.fromRectAndRadius(Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize, Radius.circular(6)));
-    //       // canvas.clipPath(clipPath);
-    //       var r = Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize;
-    //       canvas.drawImageRect(
-    //         image!,
-    //         Offset.zero & Size(image!.width.toDouble(), image!.height.toDouble()),
-    //         Offset(pieceSize.width * i, pieceSize.height * j) & pieceSize,
-    //         Paint()
-    //           // ..colorFilter = ColorFilter.mode(Color(0xffe67404), BlendMode.modulate)
-    //           ..strokeWidth = 1
-    //           ..color = Colors.black,
-    //       );
-    //       var shadowWidth = 2;
-    //       var path = Path();
-    //       path.moveTo(r.left, r.bottom);
-    //       path.lineTo(r.left + shadowWidth, r.bottom - shadowWidth);
-    //       path.lineTo(r.right - shadowWidth, r.bottom - shadowWidth);
-    //       path.lineTo(r.right, r.bottom);
-    //       path.close();
-    //       path.moveTo(r.left, r.top);
-    //       path.lineTo(r.left + shadowWidth, r.top + shadowWidth);
-    //       path.lineTo(r.left + 2, r.bottom - 2);
-    //       path.lineTo(r.left, r.bottom);
-    //       path.close();
-    //       path.moveTo(r.right, r.top);
-    //       path.lineTo(r.right - shadowWidth, r.top + shadowWidth);
-    //       path.lineTo(r.right - shadowWidth, r.bottom - shadowWidth);
-    //       path.lineTo(r.right, r.bottom);
-    //       path.close();
-    //       canvas.drawPath(
-    //           path,
-    //           Paint()
-    //             ..color = Color(0xa0000000)
-    //             ..blendMode = BlendMode.softLight);
-    //       canvas.restore();
-    //       path.reset();
-    //       path.moveTo(r.left, r.top);
-    //       path.lineTo(r.left + shadowWidth, r.top + shadowWidth);
-    //       path.lineTo(r.right - shadowWidth, r.top + shadowWidth);
-    //       path.lineTo(r.right, r.top);
-    //       path.close();
-    //       canvas.drawPath(
-    //           path,
-    //           Paint()
-    //             ..color = Color(0x60ffffff)
-    //             ..blendMode = BlendMode.hardLight);
-    //     }
-    //   }
-    // }
-
     if (image != null) {
       final context = containerKey.currentContext!;
       final mq = MediaQuery.of(context);
@@ -255,106 +198,9 @@ class ConstellationPainter extends CustomPainter {
       final pos = box.localToGlobal(Offset.zero);
       final scale = screenSize.height / image!.height;
       final srcSize = size * mq.devicePixelRatio * 1 / scale;
-      final imageOffset =
-          Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
+      final imageOffset = Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
       canvas.drawImageRect(image!, imageOffset & srcSize, Offset.zero & size, Paint());
     }
-
-    final linePaint = Paint()
-      ..color = Color(0x50ffffff)
-      ..strokeWidth = (starPathSize / 5).width;
-    for (var line in constellation.lines) {
-      var firstStar = constellation.stars[line.start];
-      var secondStar = constellation.stars[line.end];
-      canvas.drawLine(
-        firstStar.pos.toOffset(size),
-        secondStar.pos.toOffset(size),
-        linePaint,
-      );
-    }
-
-    final starPaint = Paint()..color = Color(0xffffffff);
-    for (var star in constellation.stars) {
-      final starPath = getStarPath(starPathSize)
-          .shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
-      canvas.drawPath(starPath, starPaint);
-    }
-
-    // canvas.saveLayer(
-    //     Offset.zero & size,
-    //     Paint()
-    //       ..color = Colors.white
-    //       ..blendMode = BlendMode.softLight);
-
-    // final starPaint = Paint()..color = Color(0xff000000);
-    // for (var star in constellation.stars) {
-    //   canvas.drawCircle(star.pos.toOffset(size), size.width * starSize, starPaint);
-    // }
-    //
-    // final linePaint = Paint()
-    //   ..color = Color(0xff000000)
-    //   ..strokeWidth = size.width * lineSize;
-    // for (var line in constellation.lines) {
-    //   var firstStar = constellation.stars[line.start];
-    //   var secondStar = constellation.stars[line.end];
-    //   canvas.drawLine(
-    //     firstStar.pos.toOffset(size),
-    //     secondStar.pos.toOffset(size),
-    //     linePaint,
-    //   );
-    // }
-    //
-    // canvas.restore();
-    //
-    // canvas.saveLayer(Offset.zero & size, Paint());
-    //
-    // final starShadowPaint = Paint()
-    //   ..color = Color(0x80000000)
-    //   ..strokeWidth = size.width * starShadowWidth
-    //   ..style = PaintingStyle.stroke;
-    // for (var star in constellation.stars) {
-    //   canvas.drawCircle(
-    //       star.pos.toOffset(size), size.width * starSize - size.width * starShadowWidth / 2, starShadowPaint);
-    // }
-    //
-    // final lineShadowPaint = Paint()
-    //   ..color = Color(0x80000000)
-    //   ..strokeWidth = size.width * lineSize
-    //   ..style = PaintingStyle.stroke;
-    // for (var line in constellation.lines) {
-    //   var firstStar = constellation.stars[line.start];
-    //   var secondStar = constellation.stars[line.end];
-    //   canvas.drawLine(
-    //     firstStar.pos.toOffset(size),
-    //     secondStar.pos.toOffset(size),
-    //     lineShadowPaint,
-    //   );
-    // }
-    //
-    // final starShadowErasePaint = Paint()
-    //   ..color = Color(0x80000000)
-    //   ..blendMode = BlendMode.clear;
-    // for (var star in constellation.stars) {
-    //   canvas.drawCircle(
-    //       star.pos.toOffset(size), size.width * starSize - size.width * starShadowWidth, starShadowErasePaint);
-    // }
-    //
-    // final lineShadowErasePaint = Paint()
-    //   ..color = Color(0x80000000)
-    //   ..strokeWidth = size.width * lineSize - size.width * starShadowWidth * 2
-    //   ..style = PaintingStyle.stroke
-    //   ..blendMode = BlendMode.clear;
-    // for (var line in constellation.lines) {
-    //   var firstStar = constellation.stars[line.start];
-    //   var secondStar = constellation.stars[line.end];
-    //   canvas.drawLine(
-    //     firstStar.pos.toOffset(size),
-    //     secondStar.pos.toOffset(size),
-    //     lineShadowErasePaint,
-    //   );
-    // }
-    //
-    // canvas.restore();
   }
 
   @override
@@ -368,17 +214,15 @@ class ConstellationAnimationPainter extends CustomPainter {
 
   final ConstellationAnimation constellation;
 
+  static const starPathSize = Size(12, 12);
+
+  static Offset sizeToOffset(Size size) => Offset(size.width, size.height);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final starPaint = Paint()..color = Color(0xffFFF7D5);
-    for (var star in constellation.stars) {
-      canvas.drawCircle(star.pos.toOffset(size), size.width * ConstellationPainter.starSize * star.fill, starPaint);
-    }
-
     final linePaint = Paint()
-      ..color = Color(0xffFFF7D5)
-      ..strokeWidth = size.width * ConstellationPainter.lineSize
-      ..strokeCap = StrokeCap.round;
+      ..color = Color(0x30ffffff)
+      ..strokeWidth = (starPathSize / 5).width;
     for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
       if (line.shouldFill) {
@@ -391,6 +235,58 @@ class ConstellationAnimationPainter extends CustomPainter {
           linePaint,
         );
       }
+    }
+
+    // final starPaint = Paint()..color = Color(0xffFFF7D5);
+    final starPaint = Paint()..color = Color(0xffffffff);
+    for (var star in constellation.stars) {
+      final starPath = getStarPath(starPathSize).shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
+      if (star.fill != 0 && star.fill != 1) {
+        canvas.save();
+        canvas.translate(star.pos.toOffset(size).dx, star.pos.toOffset(size).dy);
+        canvas.rotate(star.fill * pi);
+        canvas.scale(sin(star.fill * pi) * 0.5 + 1);
+        canvas.translate(-star.pos.toOffset(size).dx, -star.pos.toOffset(size).dy);
+      }
+      canvas.drawShadow(starPath, Color(0xffffffff), star.fill * 2, true);
+      canvas.drawPath(starPath, starPaint);
+      if (star.fill != 0 && star.fill != 1) {
+        canvas.restore();
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class PiecePainter extends CustomPainter {
+  PiecePainter(
+    this.image,
+    this.i,
+    this.j,
+  );
+
+  ui.Image? image;
+  late int i;
+  late int j;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (image != null) {
+      // paintImage(canvas: canvas, rect: Offset.zero & size, image: image!, fit: BoxFit.scaleDown);
+      canvas.drawImageRect(image!, Offset(j.toDouble(), i.toDouble()) * 100 & Size(100, 100), Offset.zero & size, Paint()..filterQuality = FilterQuality.high);
+      // canvas.drawAtlas(
+      //   image!,
+      //   [RSTransform.fromComponents(rotation: 0, scale: 100 / 300, anchorX: 0, anchorY: 0, translateX: 0, translateY: 0)],
+      //   [Rect.fromLTWH(j * 300, i * 300, 300, 300)],
+      //   [],
+      //   BlendMode.src,
+      //   null,
+      //   Paint(),
+      // );
     }
   }
 
