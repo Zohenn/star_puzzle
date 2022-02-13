@@ -171,11 +171,15 @@ class ConstellationPainter extends CustomPainter {
   final ui.Image? image;
   final GlobalKey containerKey;
 
+  final starPathSize = Size(12, 12);
+
   static const starSize = 0.03;
 
   static double get starShadowWidth => starSize * 0.25;
 
   static double get lineSize => starSize * 0.75;
+
+  Offset sizeToOffset(Size size) => Offset(size.width, size.height);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -250,20 +254,11 @@ class ConstellationPainter extends CustomPainter {
       final box = context.findRenderObject() as RenderBox;
       final pos = box.localToGlobal(Offset.zero);
       final scale = screenSize.height / image!.height;
-      final screenSizeImageDiff = image!.width / 2 - screenSize.width / 2;
-      final imageOffset =
-          Offset(pos.dx + screenSizeImageDiff, pos.dy * mq.devicePixelRatio * 1 / scale);
-      // final imageOffset = Offset(1200, 111.7);
       final srcSize = size * mq.devicePixelRatio * 1 / scale;
+      final imageOffset =
+          Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
       canvas.drawImageRect(image!, imageOffset & srcSize, Offset.zero & size, Paint());
-      // print(imageOffset);
-      print(imageOffset.dy);
-      // print(size * mq.devicePixelRatio * 1 / scale);
-      print(pos.dx + screenSizeImageDiff);
-      print(screenSize);
     }
-
-    final starPathSize = Size(12, 12);
 
     final linePaint = Paint()
       ..color = Color(0x50ffffff)
@@ -281,7 +276,7 @@ class ConstellationPainter extends CustomPainter {
     final starPaint = Paint()..color = Color(0xffffffff);
     for (var star in constellation.stars) {
       final starPath = getStarPath(starPathSize)
-          .shift(star.pos.toOffset(size) - Offset(starPathSize.width / 2, starPathSize.height / 2));
+          .shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
       canvas.drawPath(starPath, starPaint);
     }
 
