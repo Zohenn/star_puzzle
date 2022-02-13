@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/leo.dart';
+import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/star_path.dart';
 
 void main() {
@@ -43,6 +44,19 @@ class _MyHomePageState extends State<MyHomePage> {
   late Ticker ticker;
   int previousTime = 0;
   final containerKey = GlobalKey();
+  Puzzle puzzle = Puzzle(
+    [
+      Tile(TilePosition(0, 0), TilePosition(0, 0), false),
+      Tile(TilePosition(0, 1), TilePosition(0, 1), false),
+      Tile(TilePosition(0, 2), TilePosition(0, 2), false),
+      Tile(TilePosition(1, 0), TilePosition(1, 0), false),
+      Tile(TilePosition(1, 1), TilePosition(1, 1), false),
+      Tile(TilePosition(1, 2), TilePosition(1, 2), false),
+      Tile(TilePosition(2, 0), TilePosition(2, 0), false),
+      Tile(TilePosition(2, 1), TilePosition(2, 1), false),
+      Tile(TilePosition(2, 2), TilePosition(2, 2), true),
+    ],
+  );
 
   @override
   void initState() {
@@ -130,25 +144,38 @@ class _MyHomePageState extends State<MyHomePage> {
                           Positioned(
                             top: i * 100,
                             left: j * 100,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              clipBehavior: Clip.hardEdge,
-                              padding: const EdgeInsets.all(1.0),
-                              child: CustomPaint(
-                                painter: PiecePainter(renderedImage, i, j),
-                                child: Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text('${i * 3 + j + 1}', style: TextStyle(color: Colors.white.withOpacity(0.2))),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            child: !puzzle.tileAt(i, j).isEmpty
+                                ? Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    clipBehavior: Clip.hardEdge,
+                                    padding: const EdgeInsets.all(1.0),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        puzzle.moveTile(puzzle.tileAt(i, j));
+                                        setState(() {});
+                                      },
+                                      child: CustomPaint(
+                                        painter: PiecePainter(
+                                          renderedImage,
+                                          puzzle.tileAt(i, j).originalPosition.x,
+                                          puzzle.tileAt(i, j).originalPosition.y,
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4.0),
+                                            child: Text('${puzzle.tileAt(i, j).number}',
+                                                style: TextStyle(color: Colors.white.withOpacity(0.2))),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : SizedBox.shrink(),
                           ),
                     ],
                   ),
@@ -277,7 +304,8 @@ class PiecePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (image != null) {
       // paintImage(canvas: canvas, rect: Offset.zero & size, image: image!, fit: BoxFit.scaleDown);
-      canvas.drawImageRect(image!, Offset(j.toDouble(), i.toDouble()) * 100 & Size(100, 100), Offset.zero & size, Paint()..filterQuality = FilterQuality.high);
+      canvas.drawImageRect(image!, Offset(j.toDouble(), i.toDouble()) * 100 & Size(100, 100), Offset.zero & size,
+          Paint()..filterQuality = FilterQuality.high);
       // canvas.drawAtlas(
       //   image!,
       //   [RSTransform.fromComponents(rotation: 0, scale: 100 / 300, anchorX: 0, anchorY: 0, translateX: 0, translateY: 0)],
