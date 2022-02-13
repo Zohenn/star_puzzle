@@ -2,38 +2,73 @@ import 'dart:math';
 
 import 'dart:ui';
 
+import 'package:flutter/animation.dart';
+
 class TilePosition {
   TilePosition(this.x, this.y);
 
-  final int x;
-  final int y;
+  final double x;
+  final double y;
 
   int get index {
-    return x * 3 + y;
+    return (x * 3 + y).toInt();
   }
 
   TilePosition copy() {
     return TilePosition(x, y);
   }
 
-  Offset distanceTo(TilePosition other){
+  Offset distanceTo(TilePosition other) {
     return Offset((x - other.x).toDouble(), (y - other.y).toDouble());
+  }
+
+  static TilePosition lerp(TilePosition a, TilePosition b, double t) {
+    return TilePosition(lerpDouble(a.x, b.x, t)!, lerpDouble(a.y, b.y, t)!);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TilePosition && other.runtimeType == TilePosition && other.x == x && other.y == y;
   }
 }
 
-class Tile {
-  Tile(this.originalPosition, this.currentPosition, this.isEmpty);
+class TilePositionTween extends Tween<TilePosition> {
+  TilePositionTween({required TilePosition begin, required TilePosition end}) : super(begin: begin, end: end);
 
-  TilePosition originalPosition;
-  TilePosition currentPosition;
+  @override
+  TilePosition lerp(double t) => TilePosition.lerp(begin!, end!, t);
+}
+
+class Tile {
+  Tile(this.originalPosition, this._currentPosition, this.isEmpty);
+
+  final TilePosition originalPosition;
+  TilePosition _currentPosition;
   final bool isEmpty;
+  TilePosition? _lastPosition;
+  TilePositionTween? _positionTween;
 
   int get number {
     return originalPosition.index + 1;
   }
 
-  Offset distanceTo(Tile other){
+  Offset distanceTo(Tile other) {
     return currentPosition.distanceTo(other.currentPosition);
+  }
+
+  TilePosition get currentPosition => _currentPosition;
+
+  set currentPosition(TilePosition newPosition) {
+    if (_currentPosition != newPosition) {
+      _positionTween = TilePositionTween(begin: _currentPosition, end: newPosition);
+    }
+    _lastPosition = _currentPosition;
+    _currentPosition = newPosition;
+  }
+
+  TilePositionTween get positionTween {
+    _positionTween ??= TilePositionTween(begin: _lastPosition ?? currentPosition, end: currentPosition);
+    return _positionTween!;
   }
 }
 
@@ -60,15 +95,19 @@ class Puzzle {
         tile.currentPosition.y == _emptyTile.currentPosition.y;
   }
 
-  void moveTile(Tile tile) {
+  List<Tile> moveTile(Tile tile) {
     if (!canMoveTile(tile)) {
-      return;
+      return [];
     }
 
     final _emptyTile = emptyTile;
     Offset distance = tile.distanceTo(_emptyTile);
-    while(distance.distance > 1){
-      moveTile(tileAt((_emptyTile.currentPosition.x + distance.dx.sign).toInt(), (_emptyTile.currentPosition.y + distance.dy.sign).toInt()));
+    final updatedTiles = <Tile>[];
+    while (distance.distance > 1) {
+      updatedTiles.addAll(
+        moveTile(tileAt((_emptyTile.currentPosition.x + distance.dx.sign).toInt(),
+            (_emptyTile.currentPosition.y + distance.dy.sign).toInt())),
+      );
       distance = tile.distanceTo(_emptyTile);
     }
 
@@ -80,5 +119,7 @@ class Puzzle {
 
     tiles[tile.currentPosition.index] = tile;
     tiles[_emptyTile.currentPosition.index] = _emptyTile;
+
+    return updatedTiles..add(tile);
   }
 }

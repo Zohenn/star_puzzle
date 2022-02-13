@@ -37,7 +37,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   ui.Image? image;
   ui.Image? renderedImage;
   ConstellationAnimation constellationAnimation = ConstellationAnimation.from(leo);
@@ -57,10 +57,19 @@ class _MyHomePageState extends State<MyHomePage> {
       Tile(TilePosition(2, 2), TilePosition(2, 2), true),
     ],
   );
+  final animationControllers = <int, AnimationController>{};
+  final animations = <int, Animation<TilePosition>>{};
 
   @override
   void initState() {
     super.initState();
+
+    for (var tile in puzzle.tiles) {
+      final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
+      animationControllers[tile.number] = animationController;
+      animations[tile.number] =
+          tile.positionTween.animate(CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
+    }
 
     loadImage();
 
@@ -110,6 +119,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     ticker.stop();
     ticker.dispose();
+    animationControllers.forEach((key, value) {
+      value.dispose();
+    });
     super.dispose();
   }
 
@@ -139,44 +151,35 @@ class _MyHomePageState extends State<MyHomePage> {
                   // ),
                   child: Stack(
                     children: [
-                      for (var i = 0; i < 3; i++)
-                        for (var j = 0; j < 3; j++)
-                          Positioned(
-                            top: i * 100,
-                            left: j * 100,
-                            child: !puzzle.tileAt(i, j).isEmpty
-                                ? Container(
-                                    width: 100,
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    clipBehavior: Clip.hardEdge,
-                                    padding: const EdgeInsets.all(1.0),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        puzzle.moveTile(puzzle.tileAt(i, j));
-                                        setState(() {});
-                                      },
-                                      child: CustomPaint(
-                                        painter: PiecePainter(
-                                          renderedImage,
-                                          puzzle.tileAt(i, j).originalPosition.x,
-                                          puzzle.tileAt(i, j).originalPosition.y,
-                                        ),
-                                        child: Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(4.0),
-                                            child: Text('${puzzle.tileAt(i, j).number}',
-                                                style: TextStyle(color: Colors.white.withOpacity(0.2))),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : SizedBox.shrink(),
+                      for (var tile in puzzle.tiles)
+                        AnimatedBuilder(
+                          animation: animations[tile.number]!,
+                          builder: (context, child) {
+                            final position = animations[tile.number]!.value;
+                            return Positioned(
+                              top: position.x * 100,
+                              left: position.y * 100,
+                              child: child!,
+                            );
+                          },
+                          child: PuzzleTile(
+                            tile: tile,
+                            onTap: () {
+                              if (!puzzle.canMoveTile(tile)) {
+                                return;
+                              }
+                              final updatedTiles = puzzle.moveTile(tile);
+                              for (var tile in updatedTiles) {
+                                final animationController = animationControllers[tile.number]!;
+                                animations[tile.number] = tile.positionTween
+                                    .animate(CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
+                                animationController.reset();
+                                animationController.forward();
+                              }
+                            },
+                            renderedImage: renderedImage,
                           ),
+                        ),
                     ],
                   ),
                 ),
@@ -201,6 +204,53 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PuzzleTile extends StatelessWidget {
+  const PuzzleTile({
+    Key? key,
+    required this.tile,
+    required this.onTap,
+    required this.renderedImage,
+  }) : super(key: key);
+
+  final Tile tile;
+  final VoidCallback onTap;
+  final ui.Image? renderedImage;
+
+  @override
+  Widget build(BuildContext context) {
+    if (tile.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.hardEdge,
+      padding: const EdgeInsets.all(1.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: CustomPaint(
+          painter: PiecePainter(
+            renderedImage,
+            tile.originalPosition.x.toInt(),
+            tile.originalPosition.y.toInt(),
+          ),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Text('${tile.number}', style: TextStyle(color: Colors.white.withOpacity(0.2))),
             ),
           ),
         ),
