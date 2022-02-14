@@ -89,10 +89,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder);
-    final backgroundPainter = ConstellationBackgroundPainter(_image, containerKey);
-    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation);
-    final size = containerKey.currentContext!.size!;
-    // final size = Size(900, 900);
+    // final size = containerKey.currentContext!.size!;
+    final size = Size(900, 900);
+    final scale = size.width / 300;
+    final backgroundPainter = ConstellationBackgroundPainter(_image, containerKey, scale);
+    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, scale);
     backgroundPainter.paint(canvas, size);
     foregroundPainter.paint(canvas, size);
     final _renderedImage = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
@@ -156,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     width: 300,
                     child: showAnimation
                         ? CustomPaint(
-                            painter: ConstellationAnimationPainter(constellationAnimation),
+                            painter: ConstellationAnimationPainter(constellationAnimation, 1),
                           )
                         : Stack(
                             children: [
@@ -272,23 +273,31 @@ class PuzzleTile extends StatelessWidget {
 }
 
 class ConstellationBackgroundPainter extends CustomPainter {
-  ConstellationBackgroundPainter(this.image, this.containerKey);
+  ConstellationBackgroundPainter(this.image, this.containerKey, this.preScale);
 
   final ui.Image? image;
   final GlobalKey containerKey;
+  final double preScale;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
+      // size = Size(300, 300);
       final context = containerKey.currentContext!;
       final mq = MediaQuery.of(context);
       final screenSize = (mq.size) * mq.devicePixelRatio;
       final box = context.findRenderObject() as RenderBox;
       final pos = box.localToGlobal(Offset.zero);
       final scale = screenSize.height / image!.height;
-      final srcSize = size * mq.devicePixelRatio * 1 / scale;
+      final srcSize = box.size * mq.devicePixelRatio * 1 / scale;
       final imageOffset = Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
+      print(imageOffset);
+      print(srcSize);
+      print(size);
+      canvas.save();
+      // canvas.scale(preScale);
       canvas.drawImageRect(image!, imageOffset & srcSize, Offset.zero & size, Paint());
+      canvas.restore();
     }
   }
 
@@ -299,11 +308,14 @@ class ConstellationBackgroundPainter extends CustomPainter {
 }
 
 class ConstellationAnimationPainter extends CustomPainter {
-  ConstellationAnimationPainter(this.constellation);
+  ConstellationAnimationPainter(this.constellation, this.preScale);
 
   final ConstellationAnimation constellation;
+  final double preScale;
 
-  static const starPathSize = Size(12, 12);
+  static const baseStarPathSize = Size(12, 12);
+
+  Size get starPathSize => baseStarPathSize * preScale;
 
   static Offset sizeToOffset(Size size) => Offset(size.width, size.height);
 
@@ -359,13 +371,16 @@ class PiecePainter extends CustomPainter {
   );
 
   ui.Image? image;
-  late int i;
-  late int j;
+  int i;
+  int j;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
-      canvas.drawImageRect(image!, (Offset(j.toDouble(), i.toDouble()) * 100 + Offset((100 - size.width) / 2, (100 - size.height) / 2)) & size, Offset.zero & size,
+      canvas.drawImageRect(
+          image!,
+          (Offset(j.toDouble(), i.toDouble()) * 300 + Offset((100 - size.width) * 3 / 2, (100 - size.height) * 3 / 2)) & (size * 3),
+          Offset.zero & size,
           Paint()..filterQuality = FilterQuality.high);
     }
   }
