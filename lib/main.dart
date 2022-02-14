@@ -8,6 +8,7 @@ import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/leo.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
+import 'package:star_puzzle/star_loader.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,6 +26,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(),
+      // home: Scaffold(body: Stack(
+      //   children: [
+      //     Positioned.fill(child: Image.asset('assets/night_sky.jpg', fit: BoxFit.cover)),
+      //     Center(child: StarLoader(),),
+      //   ],
+      // ),),
     );
   }
 }
