@@ -104,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   void startAnimation() {
-    if(ticker != null){
+    if (ticker != null) {
       ticker!.stop();
       ticker!.dispose();
     }
@@ -154,43 +154,45 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     key: containerKey,
                     height: 300,
                     width: 300,
-                    child: showAnimation ? CustomPaint(
-                      painter: ConstellationAnimationPainter(constellationAnimation),
-                    ) : Stack(
-                      children: [
-                        for (var tile in puzzle.tiles)
-                          AnimatedBuilder(
-                            animation: animations[tile.number]!,
-                            builder: (context, child) {
-                              final position = animations[tile.number]!.value;
-                              return Positioned(
-                                top: position.x * 100,
-                                left: position.y * 100,
-                                child: child!,
-                              );
-                            },
-                            child: PuzzleTile(
-                              tile: tile,
-                              onTap: () {
-                                if (!puzzle.canMoveTile(tile) ||
-                                    animationControllers.values.any((element) => element.isAnimating)) {
-                                  return;
-                                }
-                                final updatedTiles = puzzle.moveTile(tile);
-                                for (var tile in updatedTiles) {
-                                  final animationController = animationControllers[tile.number]!;
-                                  animations[tile.number] = tile.positionTween
-                                      .animate(CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
-                                  animationController.reset();
-                                  animationController.forward();
-                                }
-                              },
-                              renderedImage: renderedImage,
-                              complete: complete,
-                            ),
+                    child: showAnimation
+                        ? CustomPaint(
+                            painter: ConstellationAnimationPainter(constellationAnimation),
+                          )
+                        : Stack(
+                            children: [
+                              for (var tile in puzzle.tiles)
+                                AnimatedBuilder(
+                                  animation: animations[tile.number]!,
+                                  builder: (context, child) {
+                                    final position = animations[tile.number]!.value;
+                                    return Positioned(
+                                      top: position.x * 100,
+                                      left: position.y * 100,
+                                      child: child!,
+                                    );
+                                  },
+                                  child: PuzzleTile(
+                                    tile: tile,
+                                    onTap: () {
+                                      if (!puzzle.canMoveTile(tile) ||
+                                          animationControllers.values.any((element) => element.isAnimating)) {
+                                        return;
+                                      }
+                                      final updatedTiles = puzzle.moveTile(tile);
+                                      for (var tile in updatedTiles) {
+                                        final animationController = animationControllers[tile.number]!;
+                                        animations[tile.number] = tile.positionTween.animate(
+                                            CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
+                                        animationController.reset();
+                                        animationController.forward();
+                                      }
+                                    },
+                                    renderedImage: renderedImage,
+                                    complete: complete,
+                                  ),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
                   ),
                   SizedBox(height: 16),
                   TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
@@ -363,7 +365,7 @@ class PiecePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
-      canvas.drawImageRect(image!, Offset(j.toDouble(), i.toDouble()) * 100 & Size(100, 100), Offset.zero & size,
+      canvas.drawImageRect(image!, (Offset(j.toDouble(), i.toDouble()) * 100 + Offset((100 - size.width) / 2, (100 - size.height) / 2)) & size, Offset.zero & size,
           Paint()..filterQuality = FilterQuality.high);
     }
   }
