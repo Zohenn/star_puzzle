@@ -48,6 +48,10 @@ class Tile {
   TilePosition? _lastPosition;
   TilePositionTween? _positionTween;
 
+  bool get correct {
+    return originalPosition == _currentPosition;
+  }
+
   int get number {
     return originalPosition.index + 1;
   }
@@ -79,6 +83,10 @@ class Puzzle {
 
   int get size {
     return sqrt(tiles.length).floor();
+  }
+
+  bool get complete {
+    return tiles.every((element) => element.correct);
   }
 
   Tile tileAt(int x, int y) {
