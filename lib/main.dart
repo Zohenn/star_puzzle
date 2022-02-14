@@ -4,13 +4,18 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:star_puzzle/bootstrap.dart';
 import 'package:star_puzzle/constellation.dart';
-import 'package:star_puzzle/leo.dart';
+import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
-import 'package:star_puzzle/star_loader.dart';
+import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/widgets/star_loader.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const MyApp());
 }
 
@@ -20,12 +25,12 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: Bootstrap(),
       // home: Scaffold(body: Stack(
       //   children: [
       //     Positioned.fill(child: Image.asset('assets/night_sky.jpg', fit: BoxFit.cover)),
@@ -51,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int previousTime = 0;
   final containerKey = GlobalKey();
   late Puzzle puzzle;
+
   // = Puzzle(
   //   [
   //     Tile(TilePosition(0, 0), TilePosition(0, 0), false),
@@ -78,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    puzzle = _generatePuzzle();
+    puzzle = Puzzle.generate(size);
 
     for (var tile in puzzle.tiles) {
       final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
@@ -89,53 +95,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     loadImage();
 
     // Future.delayed(Duration(milliseconds: 200), startAnimation);
-  }
-
-  Puzzle _generatePuzzle({bool shuffle = true}) {
-    final correctPositions = <TilePosition>[];
-    final currentPositions = <TilePosition>[];
-    final whitespacePosition = TilePosition(size - 1.0, size - 1.0);
-
-    // Create all possible board positions.
-    for (var y = 0.0; y < size; y++) {
-      for (var x = 0.0; x < size; x++) {
-        if (x == size - 1.0 && y == size - 1.0) {
-          correctPositions.add(whitespacePosition);
-          currentPositions.add(whitespacePosition);
-        } else {
-          final position = TilePosition(x, y);
-          correctPositions.add(position);
-          currentPositions.add(position);
-        }
-      }
-    }
-
-    if (shuffle) {
-      // Randomize only the current tile posistions.
-      currentPositions.shuffle();
-    }
-
-    var tiles = [
-      for (var i = 0; i < correctPositions.length; i++)
-        Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
-    ];
-
-    var puzzle = Puzzle(tiles);
-
-    if (shuffle) {
-      // Assign the tiles new current positions until the puzzle is solvable and
-      // zero tiles are in their correct position.
-      while (!puzzle.isSolvable() || puzzle.getNumberOfCorrectTiles() != 0) {
-        currentPositions.shuffle();
-        tiles = [
-          for (var i = 0; i < correctPositions.length; i++)
-            Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
-        ];
-        puzzle = Puzzle(tiles);
-      }
-    }
-
-    return puzzle;
   }
 
   Animation<TilePosition> animatePosition(TilePositionTween tween, AnimationController controller) {
@@ -209,72 +168,101 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               duration: Duration(milliseconds: 500),
             ),
           ),
-          Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox.fromSize(
-                    key: containerKey,
-                    size: gridSize,
-                    child: showAnimation
-                        ? CustomPaint(
-                            painter: ConstellationAnimationPainter(constellationAnimation, 1),
-                          )
-                        : Stack(
-                            children: [
-                              for (var tile in puzzle.tiles)
-                                AnimatedBuilder(
-                                  animation: animations[tile.number]!,
-                                  builder: (context, child) {
-                                    final position = animations[tile.number]!.value;
-                                    return Positioned(
-                                      left: position.y * tileSize.height,
-                                      top: position.x * tileSize.width,
-                                      child: child!,
-                                    );
-                                  },
-                                  child: PuzzleTile(
-                                    tile: tile,
-                                    tileSize: tileSize,
-                                    onTap: () {
-                                      if (!puzzle.canMoveTile(tile) ||
-                                          animationControllers.values.any((element) => element.isAnimating)) {
-                                        return;
-                                      }
-                                      final updatedTiles = puzzle.moveTile(tile);
-                                      for (var tile in updatedTiles) {
-                                        final animationController = animationControllers[tile.number]!;
-                                        animations[tile.number] =
-                                            animatePosition(tile.positionTween, animationController);
-                                        animationController.reset();
-                                        animationController.forward();
-                                      }
-                                    },
-                                    renderedImage: renderedImage,
-                                    complete: complete,
-                                  ),
+          Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        SizedBox.fromSize(
+                          key: containerKey,
+                          size: gridSize,
+                          child: showAnimation
+                              ? CustomPaint(
+                                  painter: ConstellationAnimationPainter(constellationAnimation, 1),
+                                )
+                              : Stack(
+                                  children: [
+                                    for (var tile in puzzle.tiles)
+                                      AnimatedBuilder(
+                                        animation: animations[tile.number]!,
+                                        builder: (context, child) {
+                                          final position = animations[tile.number]!.value;
+                                          return Positioned(
+                                            left: position.y * tileSize.height,
+                                            top: position.x * tileSize.width,
+                                            child: child!,
+                                          );
+                                        },
+                                        child: PuzzleTile(
+                                          tile: tile,
+                                          tileSize: tileSize,
+                                          onTap: () {
+                                            if (!puzzle.canMoveTile(tile) ||
+                                                animationControllers.values.any((element) => element.isAnimating)) {
+                                              return;
+                                            }
+                                            final updatedTiles = puzzle.moveTile(tile);
+                                            for (var tile in updatedTiles) {
+                                              final animationController = animationControllers[tile.number]!;
+                                              animations[tile.number] =
+                                                  animatePosition(tile.positionTween, animationController);
+                                              animationController.reset();
+                                              animationController.forward();
+                                            }
+                                          },
+                                          renderedImage: renderedImage,
+                                          complete: complete,
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                            ],
-                          ),
+                        ),
+                        SizedBox(height: 16),
+                        // TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
+                        // TextButton(
+                        //   onPressed: () => setState(() {
+                        //     complete = !complete;
+                        //     Future.delayed(Duration(milliseconds: 600), () {
+                        //       setState(() {
+                        //         showAnimation = complete;
+                        //         startAnimation();
+                        //       });
+                        //     });
+                        //   }),
+                        //   child: Text('Complete'),
+                        // ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 16),
-                  TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      complete = !complete;
-                      Future.delayed(Duration(milliseconds: 600), () {
-                        setState(() {
-                          showAnimation = complete;
-                          startAnimation();
-                        });
-                      });
-                    }),
-                    child: Text('Complete'),
-                  ),
-                ],
+                ),
               ),
-            ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  children: [
+                    for (var constellation in Get.find<ConstellationService>().constellations) ...[
+                      Card(
+                        clipBehavior: Clip.hardEdge,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        margin: EdgeInsets.zero,
+                        color: Colors.transparent,
+                        elevation: 4,
+                        child: SizedBox.square(
+                          dimension: 72,
+                          child: Image.memory(constellation.imageBytes!, fit: BoxFit.cover,),
+                        ),
+                      ),
+                      if(constellation != Get.find<ConstellationService>().constellations.last)
+                        SizedBox(width: 16),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

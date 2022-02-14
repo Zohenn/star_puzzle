@@ -211,4 +211,51 @@ class Puzzle {
     }
     return numberOfCorrectTiles;
   }
+
+  static Puzzle generate(int size, {bool shuffle = true}) {
+    final correctPositions = <TilePosition>[];
+    final currentPositions = <TilePosition>[];
+    final whitespacePosition = TilePosition(size - 1.0, size - 1.0);
+
+    // Create all possible board positions.
+    for (var y = 0.0; y < size; y++) {
+      for (var x = 0.0; x < size; x++) {
+        if (x == size - 1.0 && y == size - 1.0) {
+          correctPositions.add(whitespacePosition);
+          currentPositions.add(whitespacePosition);
+        } else {
+          final position = TilePosition(x, y);
+          correctPositions.add(position);
+          currentPositions.add(position);
+        }
+      }
+    }
+
+    if (shuffle) {
+      // Randomize only the current tile posistions.
+      currentPositions.shuffle();
+    }
+
+    var tiles = [
+      for (var i = 0; i < correctPositions.length; i++)
+        Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
+    ];
+
+    var puzzle = Puzzle(tiles);
+
+    if (shuffle) {
+      // Assign the tiles new current positions until the puzzle is solvable and
+      // zero tiles are in their correct position.
+      while (!puzzle.isSolvable() || puzzle.getNumberOfCorrectTiles() != 0) {
+        currentPositions.shuffle();
+        tiles = [
+          for (var i = 0; i < correctPositions.length; i++)
+            Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
+        ];
+        puzzle = Puzzle(tiles);
+      }
+    }
+
+    return puzzle;
+  }
 }

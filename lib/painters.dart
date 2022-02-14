@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/star_path.dart';
 
@@ -16,7 +17,7 @@ class ConstellationBackgroundPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (image != null) {
       final context = containerKey.currentContext!;
-      final mq = MediaQuery.of(context);
+      final mq = MediaQuery.of(Get.context!);
       final screenSize = (mq.size) * mq.devicePixelRatio;
       final box = context.findRenderObject() as RenderBox;
       final pos = box.localToGlobal(Offset.zero);
