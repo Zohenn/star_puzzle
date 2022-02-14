@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -7,8 +6,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/leo.dart';
+import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
-import 'package:star_puzzle/star_path.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,33 +43,40 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Ticker? ticker;
   int previousTime = 0;
   final containerKey = GlobalKey();
-  Puzzle puzzle = Puzzle(
-    [
-      Tile(TilePosition(0, 0), TilePosition(0, 0), false),
-      Tile(TilePosition(0, 1), TilePosition(0, 1), false),
-      Tile(TilePosition(0, 2), TilePosition(0, 2), false),
-      Tile(TilePosition(1, 0), TilePosition(1, 0), false),
-      Tile(TilePosition(1, 1), TilePosition(1, 1), false),
-      Tile(TilePosition(1, 2), TilePosition(1, 2), false),
-      Tile(TilePosition(2, 0), TilePosition(2, 0), false),
-      Tile(TilePosition(2, 1), TilePosition(2, 1), false),
-      Tile(TilePosition(2, 2), TilePosition(2, 2), true),
-    ],
-  );
+  late Puzzle puzzle;
+  // = Puzzle(
+  //   [
+  //     Tile(TilePosition(0, 0), TilePosition(0, 0), false),
+  //     Tile(TilePosition(0, 1), TilePosition(0, 1), false),
+  //     Tile(TilePosition(0, 2), TilePosition(0, 2), false),
+  //     Tile(TilePosition(1, 0), TilePosition(1, 0), false),
+  //     Tile(TilePosition(1, 1), TilePosition(1, 1), false),
+  //     Tile(TilePosition(1, 2), TilePosition(1, 2), false),
+  //     Tile(TilePosition(2, 0), TilePosition(2, 0), false),
+  //     Tile(TilePosition(2, 1), TilePosition(2, 1), false),
+  //     Tile(TilePosition(2, 2), TilePosition(2, 2), true),
+  //   ],
+  // );
   final animationControllers = <int, AnimationController>{};
   final animations = <int, Animation<TilePosition>>{};
   bool complete = false;
   bool showAnimation = false;
 
+  final gridSize = Size(300, 300);
+  final size = 3;
+
+  Size get tileSize => gridSize / size.toDouble();
+
   @override
   void initState() {
     super.initState();
 
+    puzzle = _generatePuzzle();
+
     for (var tile in puzzle.tiles) {
       final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
       animationControllers[tile.number] = animationController;
-      animations[tile.number] =
-          tile.positionTween.animate(CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
+      animations[tile.number] = animatePosition(tile.positionTween, animationController);
     }
 
     loadImage();
@@ -78,21 +84,71 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     // Future.delayed(Duration(milliseconds: 200), startAnimation);
   }
 
+  Puzzle _generatePuzzle({bool shuffle = true}) {
+    final correctPositions = <TilePosition>[];
+    final currentPositions = <TilePosition>[];
+    final whitespacePosition = TilePosition(size - 1.0, size - 1.0);
+
+    // Create all possible board positions.
+    for (var y = 0.0; y < size; y++) {
+      for (var x = 0.0; x < size; x++) {
+        if (x == size - 1.0 && y == size - 1.0) {
+          correctPositions.add(whitespacePosition);
+          currentPositions.add(whitespacePosition);
+        } else {
+          final position = TilePosition(x, y);
+          correctPositions.add(position);
+          currentPositions.add(position);
+        }
+      }
+    }
+
+    if (shuffle) {
+      // Randomize only the current tile posistions.
+      currentPositions.shuffle();
+    }
+
+    var tiles = [
+      for (var i = 0; i < correctPositions.length; i++)
+        Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
+    ];
+
+    var puzzle = Puzzle(tiles);
+
+    if (shuffle) {
+      // Assign the tiles new current positions until the puzzle is solvable and
+      // zero tiles are in their correct position.
+      while (!puzzle.isSolvable() || puzzle.getNumberOfCorrectTiles() != 0) {
+        currentPositions.shuffle();
+        tiles = [
+          for (var i = 0; i < correctPositions.length; i++)
+            Tile(correctPositions[i], currentPositions[i], i == correctPositions.length - 1)
+        ];
+        puzzle = Puzzle(tiles);
+      }
+    }
+
+    return puzzle;
+  }
+
+  Animation<TilePosition> animatePosition(TilePositionTween tween, AnimationController controller) {
+    return tween.animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
+  }
+
   Future<void> loadImage() async {
     ByteData bd = await rootBundle.load("assets/night_sky.jpg");
 
     final Uint8List bytes = Uint8List.view(bd.buffer);
-
     final ui.Codec codec = await ui.instantiateImageCodec(bytes);
-
     final ui.Image _image = (await codec.getNextFrame()).image;
+    codec.dispose();
 
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder);
     // final size = containerKey.currentContext!.size!;
-    final size = Size(900, 900);
-    final scale = size.width / 300;
-    final backgroundPainter = ConstellationBackgroundPainter(_image, containerKey, scale);
+    final scale = MediaQuery.of(context).devicePixelRatio;
+    final size = gridSize * scale;
+    final backgroundPainter = ConstellationBackgroundPainter(_image, containerKey);
     final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, scale);
     backgroundPainter.paint(canvas, size);
     foregroundPainter.paint(canvas, size);
@@ -151,10 +207,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Container(
+                  SizedBox.fromSize(
                     key: containerKey,
-                    height: 300,
-                    width: 300,
+                    size: gridSize,
                     child: showAnimation
                         ? CustomPaint(
                             painter: ConstellationAnimationPainter(constellationAnimation, 1),
@@ -167,13 +222,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                   builder: (context, child) {
                                     final position = animations[tile.number]!.value;
                                     return Positioned(
-                                      top: position.x * 100,
-                                      left: position.y * 100,
+                                      left: position.y * tileSize.height,
+                                      top: position.x * tileSize.width,
                                       child: child!,
                                     );
                                   },
                                   child: PuzzleTile(
                                     tile: tile,
+                                    tileSize: tileSize,
                                     onTap: () {
                                       if (!puzzle.canMoveTile(tile) ||
                                           animationControllers.values.any((element) => element.isAnimating)) {
@@ -182,8 +238,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                       final updatedTiles = puzzle.moveTile(tile);
                                       for (var tile in updatedTiles) {
                                         final animationController = animationControllers[tile.number]!;
-                                        animations[tile.number] = tile.positionTween.animate(
-                                            CurvedAnimation(parent: animationController, curve: Curves.easeInOut));
+                                        animations[tile.number] =
+                                            animatePosition(tile.positionTween, animationController);
                                         animationController.reset();
                                         animationController.forward();
                                       }
@@ -223,12 +279,14 @@ class PuzzleTile extends StatelessWidget {
   const PuzzleTile({
     Key? key,
     required this.tile,
+    required this.tileSize,
     required this.onTap,
     required this.renderedImage,
     required this.complete,
   }) : super(key: key);
 
   final Tile tile;
+  final Size tileSize;
   final VoidCallback onTap;
   final ui.Image? renderedImage;
   final bool complete;
@@ -240,8 +298,8 @@ class PuzzleTile extends StatelessWidget {
     }
 
     return Container(
-      width: 100,
-      height: 100,
+      width: tileSize.width,
+      height: tileSize.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
       ),
@@ -254,6 +312,7 @@ class PuzzleTile extends StatelessWidget {
             renderedImage,
             tile.originalPosition.x.toInt(),
             tile.originalPosition.y.toInt(),
+            tileSize,
           ),
           child: Align(
             alignment: Alignment.topLeft,
@@ -269,124 +328,5 @@ class PuzzleTile extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class ConstellationBackgroundPainter extends CustomPainter {
-  ConstellationBackgroundPainter(this.image, this.containerKey, this.preScale);
-
-  final ui.Image? image;
-  final GlobalKey containerKey;
-  final double preScale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image != null) {
-      // size = Size(300, 300);
-      final context = containerKey.currentContext!;
-      final mq = MediaQuery.of(context);
-      final screenSize = (mq.size) * mq.devicePixelRatio;
-      final box = context.findRenderObject() as RenderBox;
-      final pos = box.localToGlobal(Offset.zero);
-      final scale = screenSize.height / image!.height;
-      final srcSize = box.size * mq.devicePixelRatio * 1 / scale;
-      final imageOffset = Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
-      print(imageOffset);
-      print(srcSize);
-      print(size);
-      canvas.save();
-      // canvas.scale(preScale);
-      canvas.drawImageRect(image!, imageOffset & srcSize, Offset.zero & size, Paint());
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-class ConstellationAnimationPainter extends CustomPainter {
-  ConstellationAnimationPainter(this.constellation, this.preScale);
-
-  final ConstellationAnimation constellation;
-  final double preScale;
-
-  static const baseStarPathSize = Size(12, 12);
-
-  Size get starPathSize => baseStarPathSize * preScale;
-
-  static Offset sizeToOffset(Size size) => Offset(size.width, size.height);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = Color(0x30ffffff)
-      ..strokeWidth = (starPathSize / 5).width;
-    for (var line in constellation.lines) {
-      var firstStar = constellation.stars[line.start];
-      if (line.shouldFill) {
-        var secondStar = constellation.stars[line.end];
-        var firstStarOffset = firstStar.pos.toOffset(size);
-        var secondStarOffset = secondStar.pos.toOffset(size);
-        canvas.drawLine(
-          firstStarOffset,
-          firstStarOffset + (secondStarOffset - firstStarOffset) * line.fill,
-          linePaint,
-        );
-      }
-    }
-
-    // final starPaint = Paint()..color = Color(0xffFFF7D5);
-    final starPaint = Paint()..color = Color(0xffffffff);
-    for (var star in constellation.stars) {
-      final starPath = getStarPath(starPathSize).shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
-      if (star.fill != 0 && star.fill != 1) {
-        canvas.save();
-        canvas.translate(star.pos.toOffset(size).dx, star.pos.toOffset(size).dy);
-        canvas.rotate(star.fill * pi);
-        canvas.scale(sin(star.fill * pi) * 0.5 + 1);
-        canvas.translate(-star.pos.toOffset(size).dx, -star.pos.toOffset(size).dy);
-      }
-      canvas.drawShadow(starPath, Color(0xffffffff), star.fill * 2, true);
-      canvas.drawPath(starPath, starPaint);
-      if (star.fill != 0 && star.fill != 1) {
-        canvas.restore();
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
-class PiecePainter extends CustomPainter {
-  PiecePainter(
-    this.image,
-    this.i,
-    this.j,
-  );
-
-  ui.Image? image;
-  int i;
-  int j;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image != null) {
-      canvas.drawImageRect(
-          image!,
-          (Offset(j.toDouble(), i.toDouble()) * 300 + Offset((100 - size.width) * 3 / 2, (100 - size.height) * 3 / 2)) & (size * 3),
-          Offset.zero & size,
-          Paint()..filterQuality = FilterQuality.high);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }

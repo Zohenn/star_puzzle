@@ -4,7 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/animation.dart';
 
-class TilePosition {
+class TilePosition implements Comparable<TilePosition> {
   TilePosition(this.x, this.y);
 
   final double x;
@@ -29,6 +29,23 @@ class TilePosition {
   @override
   bool operator ==(Object other) {
     return other is TilePosition && other.runtimeType == TilePosition && other.x == x && other.y == y;
+  }
+
+  @override
+  int compareTo(TilePosition other) {
+    if (y < other.y) {
+      return -1;
+    } else if (y > other.y) {
+      return 1;
+    } else {
+      if (x < other.x) {
+        return -1;
+      } else if (x > other.x) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
   }
 }
 
@@ -129,5 +146,69 @@ class Puzzle {
     tiles[_emptyTile.currentPosition.index] = _emptyTile;
 
     return updatedTiles..add(tile);
+  }
+
+  bool isSolvable() {
+    final inversions = countInversions();
+
+    if (size.isOdd) {
+      return inversions.isEven;
+    }
+
+    final emptyTile = tiles.singleWhere((tile) => tile.isEmpty);
+    final emptyRow = emptyTile.currentPosition.y.toInt();
+
+    if (((size - emptyRow) + 1).isOdd) {
+      return inversions.isEven;
+    } else {
+      return inversions.isOdd;
+    }
+  }
+
+  /// Gives the number of inversions in a puzzle given its tile arrangement.
+  ///
+  /// An inversion is when a tile of a lower value is in a greater position than
+  /// a tile of a higher value.
+  int countInversions() {
+    var count = 0;
+    for (var a = 0; a < tiles.length; a++) {
+      final tileA = tiles[a];
+      if (tileA.isEmpty) {
+        continue;
+      }
+
+      for (var b = a + 1; b < tiles.length; b++) {
+        final tileB = tiles[b];
+        if (_isInversion(tileA, tileB)) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  /// Determines if the two tiles are inverted.
+  bool _isInversion(Tile a, Tile b) {
+    if (!b.isEmpty && a.number != b.number) {
+      if (b.number < a.number) {
+        return b.currentPosition.compareTo(a.currentPosition) > 0;
+      } else {
+        return a.currentPosition.compareTo(b.currentPosition) > 0;
+      }
+    }
+    return false;
+  }
+
+  int getNumberOfCorrectTiles() {
+    final _emptyTile = emptyTile;
+    var numberOfCorrectTiles = 0;
+    for (final tile in tiles) {
+      if (tile != _emptyTile) {
+        if (tile.currentPosition == tile.originalPosition) {
+          numberOfCorrectTiles++;
+        }
+      }
+    }
+    return numberOfCorrectTiles;
   }
 }
