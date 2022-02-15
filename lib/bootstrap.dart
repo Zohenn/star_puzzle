@@ -27,7 +27,7 @@ class _BootstrapState extends State<Bootstrap> {
                 child: SizedBox.square(key: Get.find<BaseService>().containerKey, dimension: 300),
               ),
             ),
-            SizedBox(height: 72 + 2 * 16),
+            SizedBox(height: 96 + 2 * 16),
           ],
         ),
         FutureBuilder(

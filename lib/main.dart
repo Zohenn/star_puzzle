@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:star_puzzle/bootstrap.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
+import 'package:star_puzzle/constellations/sagittarius.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
@@ -51,7 +52,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   ui.Image? image;
   ui.Image? renderedImage;
-  ConstellationAnimation constellationAnimation = ConstellationAnimation.from(leo);
+  ConstellationAnimation constellationAnimation = ConstellationAnimation.from(sagittarius);
   Ticker? ticker;
   int previousTime = 0;
   final containerKey = GlobalKey();
@@ -131,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ticker!.stop();
       ticker!.dispose();
     }
-    constellationAnimation = ConstellationAnimation.from(leo);
+    constellationAnimation = ConstellationAnimation.from(sagittarius);
     constellationAnimation.stars.first.shouldFill = true;
     previousTime = 0;
     ticker = Ticker((elapsed) {
@@ -222,18 +223,26 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         ),
                         SizedBox(height: 16),
                         // TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
-                        // TextButton(
-                        //   onPressed: () => setState(() {
-                        //     complete = !complete;
-                        //     Future.delayed(Duration(milliseconds: 600), () {
-                        //       setState(() {
-                        //         showAnimation = complete;
-                        //         startAnimation();
-                        //       });
-                        //     });
-                        //   }),
-                        //   child: Text('Complete'),
-                        // ),
+                        TextButton(
+                          onPressed: () => setState(() {
+                            complete = !complete;
+                            for (var tile in puzzle.tiles) {
+                              tile.currentPosition = tile.originalPosition.copy();
+                              final animationController = animationControllers[tile.number]!;
+                              animations[tile.number] =
+                                  animatePosition(tile.positionTween, animationController);
+                              animationController.value = 1.0;
+                            }
+                            setState(() {});
+                            Future.delayed(Duration(milliseconds: 600), () {
+                              setState(() {
+                                showAnimation = complete;
+                                startAnimation();
+                              });
+                            });
+                          }),
+                          child: Text('Complete'),
+                        ),
                       ],
                     ),
                   ),
@@ -247,17 +256,36 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     for (var constellation in Get.find<ConstellationService>().constellations) ...[
                       Card(
                         clipBehavior: Clip.hardEdge,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          // side: BorderSide(
+                          //     color: constellation == Get.find<ConstellationService>().constellations.first
+                          //         ? Color(0xfffff8dc).withOpacity(0.6)
+                          //         : Colors.transparent),
+                        ),
                         margin: EdgeInsets.zero,
                         color: Colors.transparent,
                         elevation: 4,
-                        child: SizedBox.square(
-                          dimension: 72,
-                          child: Image.memory(constellation.imageBytes!, fit: BoxFit.cover,),
+                        // shadowColor: Color(0xfffff8dc),
+                        child: Stack(
+                          children: [
+                            SizedBox.square(
+                              dimension: 96,
+                              child: Image.memory(
+                                constellation.imageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            if (constellation != Get.find<ConstellationService>().constellations.first)
+                              Positioned.fill(
+                                child: ColoredBox(
+                                  color: Colors.white.withOpacity(0.1),
+                                ),
+                              )
+                          ],
                         ),
                       ),
-                      if(constellation != Get.find<ConstellationService>().constellations.last)
-                        SizedBox(width: 16),
+                      if (constellation != Get.find<ConstellationService>().constellations.last) SizedBox(width: 16),
                     ],
                   ],
                 ),

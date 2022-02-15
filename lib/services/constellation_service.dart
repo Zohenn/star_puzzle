@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
+import 'package:star_puzzle/constellations/sagittarius.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/services/base_service.dart';
 
@@ -30,7 +31,7 @@ class ConstellationMeta {
     final scale = MediaQuery.of(Get.context!).devicePixelRatio;
     final size = gridSize * scale;
     final backgroundPainter = ConstellationBackgroundPainter(Get.find<BaseService>().backgroundImage, containerKey);
-    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.5);
+    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.35);
     // backgroundPainter.paint(canvas, size);
     canvas.drawRect(Offset.zero & size, Paint().. color = Color(0xff081229));
     foregroundPainter.paint(canvas, size);
@@ -44,7 +45,7 @@ class ConstellationMeta {
 class ConstellationService extends GetxService {
   ConstellationService(this.containerKey);
 
-  final List<Constellation> _constellations = [leo];
+  final List<Constellation> _constellations = [leo, sagittarius];
   final List<ConstellationMeta> constellations = [];
   final GlobalKey containerKey;
   Future? initFuture;

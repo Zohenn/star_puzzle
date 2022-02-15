@@ -50,10 +50,12 @@ class AnimationLine extends Line {
 
 class Constellation {
   Constellation({
+    required this.name,
     required this.stars,
     required this.lines,
   });
 
+  final String name;
   final List<Star> stars;
   final List<Line> lines;
 }
