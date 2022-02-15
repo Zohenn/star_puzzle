@@ -52,4 +52,5 @@ final sagittarius = Constellation(
     Line(16, 19),
     Line(19, 20)
   ],
+  starSize: 10,
 );

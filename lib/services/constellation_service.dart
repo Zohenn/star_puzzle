@@ -11,7 +11,7 @@ import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/services/base_service.dart';
 
 class ConstellationMeta {
-  ConstellationMeta(this.constellation): constellationAnimation = ConstellationAnimation.from(constellation);
+  ConstellationMeta(this.constellation) : constellationAnimation = ConstellationAnimation.from(constellation);
 
   final Constellation constellation;
   ConstellationAnimation constellationAnimation;
@@ -20,7 +20,7 @@ class ConstellationMeta {
   Uint8List? imageBytes;
 
   Future loadImage(GlobalKey containerKey) async {
-    if(image != null){
+    if (image != null) {
       return;
     }
 
@@ -32,9 +32,9 @@ class ConstellationMeta {
     final scale = MediaQuery.of(Get.context!).devicePixelRatio;
     final size = gridSize * scale;
     final backgroundPainter = ConstellationBackgroundPainter(Get.find<BaseService>().backgroundImage, containerKey);
-    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, true);
+    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, useCircles: true);
     // backgroundPainter.paint(canvas, size);
-    canvas.drawRect(Offset.zero & size, Paint().. color = Color(0xff081229));
+    canvas.drawRect(Offset.zero & size, Paint()..color = Color(0xff081229));
     foregroundPainter.paint(canvas, size);
     image = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
 

@@ -53,11 +53,13 @@ class Constellation {
     required this.name,
     required this.stars,
     required this.lines,
+    this.starSize,
   });
 
   final String name;
   final List<Star> stars;
   final List<Line> lines;
+  final double? starSize;
 }
 
 class ConstellationAnimation {

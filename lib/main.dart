@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:star_puzzle/bootstrap.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
@@ -181,7 +182,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         initialIndex: 0,
         child: Stack(
           children: [
-            Positioned.fill(child: Image.asset('assets/night_sky.jpg', fit: BoxFit.cover, filterQuality: FilterQuality.high,)),
+            Positioned.fill(
+                child: Image.asset(
+              'assets/night_sky.jpg',
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.high,
+            )),
             Positioned.fill(
               child: AnimatedContainer(
                 color: complete ? Color(0x00ffffff) : Color(0x20ffffff),
@@ -201,19 +207,31 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             children: [
                               Text(
                                 constellation.solved ? constellation.constellation.name : 'Unknown',
-                                style: Theme.of(context).textTheme.headline4!.copyWith(color: constellation.solved ? Colors.white : Colors.white60),
+                                style: GoogleFonts.josefinSlab(
+                                    textStyle: Theme.of(context)
+                                        .textTheme
+                                        .headline4!
+                                        .copyWith(color: constellation.solved ? Colors.white : Colors.white60)),
                               ),
                               SizedBox(height: 16),
                               SizedBox.fromSize(
                                 size: gridSize,
                                 child: CustomPaint(
-                                  painter: ConstellationAnimationPainter(constellation.constellationAnimation, 1),
+                                  painter: ConstellationAnimationPainter(
+                                    constellation.constellationAnimation,
+                                    1,
+                                    starSize: constellation.constellation.starSize,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 16),
                               TextButton(
                                 onPressed: () {},
                                 child: Text('Solve'),
+                                style: ButtonStyle(
+                                  textStyle: MaterialStateProperty.all(TextStyle(fontSize: 18)),
+                                  padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
+                                ),
                               ),
                             ],
                           ),
@@ -235,10 +253,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             clipBehavior: Clip.hardEdge,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
-                              // side: BorderSide(
-                              //     color: constellation == Get.find<ConstellationService>().constellations.first
-                              //         ? Color(0xfffff8dc).withOpacity(0.6)
-                              //         : Colors.transparent),
                             ),
                             margin: EdgeInsets.zero,
                             color: Colors.transparent,
@@ -289,62 +303,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class PuzzleTile extends StatelessWidget {
-  const PuzzleTile({
-    Key? key,
-    required this.tile,
-    required this.tileSize,
-    required this.onTap,
-    required this.renderedImage,
-    required this.complete,
-  }) : super(key: key);
-
-  final Tile tile;
-  final Size tileSize;
-  final VoidCallback onTap;
-  final ui.Image? renderedImage;
-  final bool complete;
-
-  @override
-  Widget build(BuildContext context) {
-    if (tile.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: tileSize.width,
-      height: tileSize.height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      clipBehavior: Clip.hardEdge,
-      padding: const EdgeInsets.all(1.0),
-      child: GestureDetector(
-        onTap: onTap,
-        child: CustomPaint(
-          painter: PiecePainter(
-            renderedImage,
-            tile.originalPosition.x.toInt(),
-            tile.originalPosition.y.toInt(),
-            tileSize,
-          ),
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: AnimatedDefaultTextStyle(
-                child: Text('${tile.number}'),
-                style: TextStyle(color: complete ? Colors.transparent : Colors.white.withOpacity(0.2)),
-                duration: Duration(milliseconds: 500),
-              ),
-            ),
-          ),
         ),
       ),
     );

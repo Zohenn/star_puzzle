@@ -1,4 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:star_puzzle/painters.dart';
+import 'package:star_puzzle/puzzle.dart';
 
 class ConstellationPuzzle extends StatelessWidget {
   const ConstellationPuzzle({Key? key}) : super(key: key);
@@ -77,6 +81,62 @@ class ConstellationPuzzle extends StatelessWidget {
             //   child: Text('Complete'),
             // ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class PuzzleTile extends StatelessWidget {
+  const PuzzleTile({
+    Key? key,
+    required this.tile,
+    required this.tileSize,
+    required this.onTap,
+    required this.renderedImage,
+    required this.complete,
+  }) : super(key: key);
+
+  final Tile tile;
+  final Size tileSize;
+  final VoidCallback onTap;
+  final ui.Image? renderedImage;
+  final bool complete;
+
+  @override
+  Widget build(BuildContext context) {
+    if (tile.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: tileSize.width,
+      height: tileSize.height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.hardEdge,
+      padding: const EdgeInsets.all(1.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: CustomPaint(
+          painter: PiecePainter(
+            renderedImage,
+            tile.originalPosition.x.toInt(),
+            tile.originalPosition.y.toInt(),
+            tileSize,
+          ),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: AnimatedDefaultTextStyle(
+                child: Text('${tile.number}'),
+                style: TextStyle(color: complete ? Colors.transparent : Colors.white.withOpacity(0.2)),
+                duration: Duration(milliseconds: 500),
+              ),
+            ),
+          ),
         ),
       ),
     );

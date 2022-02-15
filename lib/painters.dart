@@ -37,15 +37,16 @@ class ConstellationBackgroundPainter extends CustomPainter {
 }
 
 class ConstellationAnimationPainter extends CustomPainter {
-  ConstellationAnimationPainter(this.constellation, this.preScale, [this.useCircles = false]);
+  ConstellationAnimationPainter(this.constellation, this.preScale, {this.useCircles = false, this.starSize});
 
   final ConstellationAnimation constellation;
   final double preScale;
   final bool useCircles;
+  final double? starSize;
 
-  static const baseStarPathSize = Size(12, 12);
+  static const _baseStarPathSize = Size(12, 12);
 
-  Size get starPathSize => baseStarPathSize * preScale;
+  Size get starPathSize => (starSize != null ? Size.square(starSize!) : _baseStarPathSize) * preScale;
 
   static Offset sizeToOffset(Size size) => Offset(size.width, size.height);
 
