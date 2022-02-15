@@ -37,10 +37,11 @@ class ConstellationBackgroundPainter extends CustomPainter {
 }
 
 class ConstellationAnimationPainter extends CustomPainter {
-  ConstellationAnimationPainter(this.constellation, this.preScale);
+  ConstellationAnimationPainter(this.constellation, this.preScale, [this.useCircles = false]);
 
   final ConstellationAnimation constellation;
   final double preScale;
+  final bool useCircles;
 
   static const baseStarPathSize = Size(12, 12);
 
@@ -70,18 +71,22 @@ class ConstellationAnimationPainter extends CustomPainter {
     // final starPaint = Paint()..color = Color(0xffFFF7D5);
     final starPaint = Paint()..color = Color(0xffffffff);
     for (var star in constellation.stars) {
-      final starPath = getStarPath(starPathSize).shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
-      if (star.fill != 0 && star.fill != 1) {
-        canvas.save();
-        canvas.translate(star.pos.toOffset(size).dx, star.pos.toOffset(size).dy);
-        canvas.rotate(star.fill * pi);
-        canvas.scale(sin(star.fill * pi) * 0.5 + 1);
-        canvas.translate(-star.pos.toOffset(size).dx, -star.pos.toOffset(size).dy);
-      }
-      canvas.drawShadow(starPath, Color(0xffffffff), star.fill * 2, true);
-      canvas.drawPath(starPath, starPaint);
-      if (star.fill != 0 && star.fill != 1) {
-        canvas.restore();
+      if (useCircles) {
+        canvas.drawCircle(star.pos.toOffset(size), starPathSize.width * preScale, starPaint);
+      } else {
+        final starPath = getStarPath(starPathSize).shift(star.pos.toOffset(size) - sizeToOffset(starPathSize) / 2);
+        if (star.fill != 0 && star.fill != 1) {
+          canvas.save();
+          canvas.translate(star.pos.toOffset(size).dx, star.pos.toOffset(size).dy);
+          canvas.rotate(star.fill * pi);
+          canvas.scale(sin(star.fill * pi) * 0.5 + 1);
+          canvas.translate(-star.pos.toOffset(size).dx, -star.pos.toOffset(size).dy);
+        }
+        canvas.drawShadow(starPath, Color(0xffffffff), star.fill * 2, true);
+        canvas.drawPath(starPath, starPaint);
+        if (star.fill != 0 && star.fill != 1) {
+          canvas.restore();
+        }
       }
     }
   }
@@ -111,7 +116,7 @@ class PiecePainter extends CustomPainter {
       final scale = (image!.width / 3) / tileSize.width;
       canvas.drawImageRect(
           image!,
-          (Offset(j.toDouble(), i.toDouble()) * tileSize.width * scale +
+          (Offset(i.toDouble(), j.toDouble()) * tileSize.width * scale +
                   Offset((tileSize.width - size.width) * scale / 2, (tileSize.height - size.height) * scale / 2)) &
               (size * scale),
           Offset.zero & size,

@@ -15,6 +15,7 @@ class ConstellationMeta {
 
   final Constellation constellation;
   ConstellationAnimation constellationAnimation;
+  bool solved = false;
   ui.Image? image;
   Uint8List? imageBytes;
 
@@ -31,7 +32,7 @@ class ConstellationMeta {
     final scale = MediaQuery.of(Get.context!).devicePixelRatio;
     final size = gridSize * scale;
     final backgroundPainter = ConstellationBackgroundPainter(Get.find<BaseService>().backgroundImage, containerKey);
-    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.35);
+    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, true);
     // backgroundPainter.paint(canvas, size);
     canvas.drawRect(Offset.zero & size, Paint().. color = Color(0xff081229));
     foregroundPainter.paint(canvas, size);

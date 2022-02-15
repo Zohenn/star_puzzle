@@ -24,7 +24,16 @@ class _BootstrapState extends State<Bootstrap> {
           children: [
             Expanded(
               child: Center(
-                child: SizedBox.square(key: Get.find<BaseService>().containerKey, dimension: 300),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox.square(key: Get.find<BaseService>().containerKey, dimension: 300),
+                      SizedBox(height: 16),
+                      TextButton(onPressed: (){}, child: Text('')),
+                    ],
+                  ),
+                ),
               ),
             ),
             SizedBox(height: 96 + 2 * 16),

@@ -13,11 +13,12 @@ import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/widgets/star_loader.dart';
+import 'package:star_puzzle/widgets/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const MyApp());
+  runApp(const ThemeProvider(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -28,9 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: Theme.of(context),
       home: Bootstrap(),
       // home: Scaffold(body: Stack(
       //   children: [
@@ -73,17 +72,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   // );
   final animationControllers = <int, AnimationController>{};
   final animations = <int, Animation<TilePosition>>{};
-  bool complete = false;
+  bool complete = true;
   bool showAnimation = false;
+  late ConstellationMeta selectedConstellation;
 
   final gridSize = Size(300, 300);
   final size = 3;
 
   Size get tileSize => gridSize / size.toDouble();
 
+  List<ConstellationMeta> get constellations => Get.find<ConstellationService>().constellations;
+
   @override
   void initState() {
     super.initState();
+
+    selectedConstellation = constellations.first;
 
     puzzle = Puzzle.generate(size);
 
@@ -172,139 +176,120 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(child: Image.asset('assets/night_sky.jpg', fit: BoxFit.cover)),
-          Positioned.fill(
-            child: AnimatedContainer(
-              color: complete ? Color(0x00ffffff) : Color(0x20ffffff),
-              duration: Duration(milliseconds: 500),
+      body: DefaultTabController(
+        length: constellations.length,
+        initialIndex: 0,
+        child: Stack(
+          children: [
+            Positioned.fill(child: Image.asset('assets/night_sky.jpg', fit: BoxFit.cover, filterQuality: FilterQuality.high,)),
+            Positioned.fill(
+              child: AnimatedContainer(
+                color: complete ? Color(0x00ffffff) : Color(0x20ffffff),
+                duration: Duration(milliseconds: 500),
+              ),
             ),
-          ),
-          Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        SizedBox.fromSize(
-                          key: containerKey,
-                          size: gridSize,
-                          child: showAnimation
-                              ? CustomPaint(
-                                  painter: ConstellationAnimationPainter(constellationAnimation, 1),
-                                )
-                              : Stack(
-                                  children: [
-                                    for (var tile in puzzle.tiles)
-                                      AnimatedBuilder(
-                                        animation: animations[tile.number]!,
-                                        builder: (context, child) {
-                                          final position = animations[tile.number]!.value;
-                                          return Positioned(
-                                            left: position.x * tileSize.width,
-                                            top: position.y * tileSize.height,
-                                            child: child!,
-                                          );
-                                        },
-                                        child: PuzzleTile(
-                                          tile: tile,
-                                          tileSize: tileSize,
-                                          onTap: () {
-                                            if (!puzzle.canMoveTile(tile) ||
-                                                animationControllers.values.any((element) => element.isAnimating)) {
-                                              return;
-                                            }
-                                            final updatedTiles = puzzle.moveTile(tile);
-                                            for (var tile in updatedTiles) {
-                                              final animationController = animationControllers[tile.number]!;
-                                              animations[tile.number] =
-                                                  animatePosition(tile.positionTween, animationController);
-                                              animationController.reset();
-                                              animationController.forward();
-                                            }
-                                          },
-                                          renderedImage: renderedImage,
-                                          complete: complete,
-                                        ),
-                                      ),
-                                  ],
+            Column(
+              children: [
+                Expanded(
+                  child: TabBarView(
+                    physics: NeverScrollableScrollPhysics(),
+                    children: [
+                      for (var constellation in constellations)
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                constellation.solved ? constellation.constellation.name : 'Unknown',
+                                style: Theme.of(context).textTheme.headline4!.copyWith(color: constellation.solved ? Colors.white : Colors.white60),
+                              ),
+                              SizedBox(height: 16),
+                              SizedBox.fromSize(
+                                size: gridSize,
+                                child: CustomPaint(
+                                  painter: ConstellationAnimationPainter(constellation.constellationAnimation, 1),
                                 ),
+                              ),
+                              SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () {},
+                                child: Text('Solve'),
+                              ),
+                            ],
+                          ),
                         ),
-                        SizedBox(height: 16),
-                        // TextButton(onPressed: () => loadImage(), child: Text('Reload image')),
-                        TextButton(
-                          onPressed: () => setState(() {
-                            complete = !complete;
-                            for (var tile in puzzle.tiles) {
-                              tile.currentPosition = tile.originalPosition.copy();
-                              final animationController = animationControllers[tile.number]!;
-                              animations[tile.number] =
-                                  animatePosition(tile.positionTween, animationController);
-                              animationController.value = 1.0;
-                            }
-                            setState(() {});
-                            Future.delayed(Duration(milliseconds: 600), () {
-                              setState(() {
-                                showAnimation = complete;
-                                startAnimation();
-                              });
-                            });
-                          }),
-                          child: Text('Complete'),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Row(
-                  children: [
-                    for (var constellation in Get.find<ConstellationService>().constellations) ...[
-                      Card(
-                        clipBehavior: Clip.hardEdge,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          // side: BorderSide(
-                          //     color: constellation == Get.find<ConstellationService>().constellations.first
-                          //         ? Color(0xfffff8dc).withOpacity(0.6)
-                          //         : Colors.transparent),
-                        ),
-                        margin: EdgeInsets.zero,
-                        color: Colors.transparent,
-                        elevation: 4,
-                        // shadowColor: Color(0xfffff8dc),
-                        child: Stack(
-                          children: [
-                            SizedBox.square(
-                              dimension: 96,
-                              child: Image.memory(
-                                constellation.imageBytes!,
-                                fit: BoxFit.cover,
-                              ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Row(
+                    children: [
+                      for (var constellation in constellations) ...[
+                        AnimatedContainer(
+                          duration: kThemeChangeDuration,
+                          curve: Curves.easeInOut,
+                          transform: Matrix4.translationValues(0, selectedConstellation == constellation ? -8 : 0, 0),
+                          child: Card(
+                            clipBehavior: Clip.hardEdge,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              // side: BorderSide(
+                              //     color: constellation == Get.find<ConstellationService>().constellations.first
+                              //         ? Color(0xfffff8dc).withOpacity(0.6)
+                              //         : Colors.transparent),
                             ),
-                            if (constellation != Get.find<ConstellationService>().constellations.first)
-                              Positioned.fill(
-                                child: ColoredBox(
-                                  color: Colors.white.withOpacity(0.1),
+                            margin: EdgeInsets.zero,
+                            color: Colors.transparent,
+                            elevation: selectedConstellation == constellation ? 4 : 0,
+                            // shadowColor: Color(0xfffff8dc),
+                            child: Stack(
+                              children: [
+                                SizedBox.square(
+                                  dimension: 96,
+                                  child: Image.memory(
+                                    constellation.imageBytes!,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              )
-                          ],
+                                Positioned.fill(
+                                  child: AnimatedContainer(
+                                    duration: kThemeChangeDuration,
+                                    color: selectedConstellation == constellation
+                                        ? Colors.transparent
+                                        : Colors.white.withOpacity(0.1),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: Builder(
+                                      builder: (context) => InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedConstellation = constellation;
+                                            DefaultTabController.of(context)!
+                                                .animateTo(constellations.indexOf(constellation));
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      if (constellation != Get.find<ConstellationService>().constellations.last) SizedBox(width: 16),
+                        if (constellation != constellations.last) SizedBox(width: 16),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
