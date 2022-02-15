@@ -11,7 +11,7 @@ class TilePosition implements Comparable<TilePosition> {
   final double y;
 
   int get index {
-    return (x * 3 + y).toInt();
+    return (x + y * 3).toInt();
   }
 
   TilePosition copy() {
@@ -19,7 +19,7 @@ class TilePosition implements Comparable<TilePosition> {
   }
 
   Offset distanceTo(TilePosition other) {
-    return Offset((x - other.x).toDouble(), (y - other.y).toDouble());
+    return Offset(x - other.x, y - other.y);
   }
 
   static TilePosition lerp(TilePosition a, TilePosition b, double t) {
@@ -46,6 +46,11 @@ class TilePosition implements Comparable<TilePosition> {
         return 0;
       }
     }
+  }
+
+  @override
+  String toString() {
+    return 'TilePosition($x, $y)';
   }
 }
 
@@ -107,7 +112,7 @@ class Puzzle {
   }
 
   Tile tileAt(int x, int y) {
-    return tiles[x * 3 + y];
+    return tiles.firstWhere((element) => element.currentPosition.x == x && element.currentPosition.y == y);
   }
 
   Tile get emptyTile {
@@ -134,6 +139,7 @@ class Puzzle {
             (_emptyTile.currentPosition.y + distance.dy.sign).toInt())),
       );
       distance = tile.distanceTo(_emptyTile);
+      break;
     }
 
     final emptyTilePosition = _emptyTile.currentPosition.copy();

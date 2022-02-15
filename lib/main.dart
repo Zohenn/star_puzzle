@@ -87,6 +87,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     puzzle = Puzzle.generate(size);
 
+    // puzzle = Puzzle([
+    //   Tile(TilePosition(0, 0), TilePosition(2, 2), false),
+    //   Tile(TilePosition(1, 0), TilePosition(1, 2), false),
+    //   Tile(TilePosition(2, 0), TilePosition(2, 1), false),
+    //   Tile(TilePosition(0, 1), TilePosition(2, 0), false),
+    //   Tile(TilePosition(1, 1), TilePosition(0, 2), false),
+    //   Tile(TilePosition(2, 1), TilePosition(0, 1), false),
+    //   Tile(TilePosition(0, 2), TilePosition(1, 1), false),
+    //   Tile(TilePosition(1, 2), TilePosition(0, 0), false),
+    //   Tile(TilePosition(2, 2), TilePosition(1, 0), true),
+    // ]);
+
     for (var tile in puzzle.tiles) {
       final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
       animationControllers[tile.number] = animationController;
@@ -192,8 +204,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                         builder: (context, child) {
                                           final position = animations[tile.number]!.value;
                                           return Positioned(
-                                            left: position.y * tileSize.height,
-                                            top: position.x * tileSize.width,
+                                            left: position.x * tileSize.width,
+                                            top: position.y * tileSize.height,
                                             child: child!,
                                           );
                                         },
