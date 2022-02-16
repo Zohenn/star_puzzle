@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
@@ -89,39 +88,6 @@ class ConstellationAnimationPainter extends CustomPainter {
           canvas.restore();
         }
       }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
-class PiecePainter extends CustomPainter {
-  PiecePainter(
-    this.image,
-    this.i,
-    this.j,
-    this.tileSize,
-  );
-
-  ui.Image? image;
-  int i;
-  int j;
-  Size tileSize;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image != null) {
-      final scale = (image!.width / 3) / tileSize.width;
-      canvas.drawImageRect(
-          image!,
-          (Offset(i.toDouble(), j.toDouble()) * tileSize.width * scale +
-                  Offset((tileSize.width - size.width) * scale / 2, (tileSize.height - size.height) * scale / 2)) &
-              (size * scale),
-          Offset.zero & size,
-          Paint()..filterQuality = FilterQuality.high);
     }
   }
 

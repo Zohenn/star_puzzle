@@ -188,7 +188,7 @@ class NewPuzzleTile extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: CustomPaint(
-          painter: NewPiecePainter(
+          painter: TilePainter(
             Get.find<BaseService>().backgroundImage,
             tile.originalPosition.x.toInt(),
             tile.originalPosition.y.toInt(),
@@ -213,8 +213,8 @@ class NewPuzzleTile extends StatelessWidget {
   }
 }
 
-class NewPiecePainter extends CustomPainter {
-  NewPiecePainter(
+class TilePainter extends CustomPainter {
+  TilePainter(
     this.image,
     this.i,
     this.j,
@@ -271,7 +271,5 @@ class NewPiecePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
