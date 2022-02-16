@@ -30,12 +30,16 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
       animations[tile.number] = animatePosition(tile.positionTween, animationController);
     }
 
+    shuffleAnimationController.addStatusListener((status) {
+      shuffleAnimationFinished.value = status == AnimationStatus.completed;
+    });
     shuffleAnimationController.forward();
   }
 
   final Puzzle puzzle;
   late AnimationController shuffleAnimationController;
   final shuffleAnimations = <int, Animation<TilePosition>>{};
+  final shuffleAnimationFinished = false.obs;
   final animationControllers = <int, AnimationController>{};
   final animations = <int, Animation<TilePosition>>{};
 
@@ -82,48 +86,50 @@ class ConstellationPuzzleGrid extends StatelessWidget {
           state.controller?.onStart();
         }
       },
-      builder: (controller) => Stack(
-        fit: StackFit.expand,
-        children: [
-          for (var tile in puzzle!.tiles)
-            AnimatedBuilder(
-              animation: controller.shuffleAnimationController.isAnimating
-                  ? controller.shuffleAnimations[tile.number]!
-                  : controller.animations[tile.number]!,
-              builder: (context, child) {
-                final position = controller.shuffleAnimationController.isAnimating
-                    ? controller.shuffleAnimations[tile.number]!.value
-                    : controller.animations[tile.number]!.value;
-                return Positioned(
-                  left: position.x * tileSize.width,
-                  top: position.y * tileSize.height,
-                  child: child!,
-                );
-              },
-              child: NewPuzzleTile(
-                tile: tile,
-                gridSize: gridSize,
-                tileSize: tileSize,
-                onTap: () {
-                  if (!puzzle!.canMoveTile(tile) ||
-                      controller.shuffleAnimationController.isAnimating ||
-                      controller.animationControllers.values.any((element) => element.isAnimating)) {
-                    return;
-                  }
-                  final updatedTiles = puzzle!.moveTile(tile);
-                  for (var tile in updatedTiles) {
-                    final animationController = controller.animationControllers[tile.number]!;
-                    controller.animations[tile.number] =
-                        controller.animatePosition(tile.positionTween, animationController);
-                    animationController.reset();
-                    animationController.forward();
-                  }
+      builder: (controller) => Obx(
+        () => Stack(
+          fit: StackFit.expand,
+          children: [
+            for (var tile in puzzle!.tiles)
+              AnimatedBuilder(
+                animation: !controller.shuffleAnimationFinished()
+                    ? controller.shuffleAnimations[tile.number]!
+                    : controller.animations[tile.number]!,
+                builder: (context, child) {
+                  final position = !controller.shuffleAnimationFinished()
+                      ? controller.shuffleAnimations[tile.number]!.value
+                      : controller.animations[tile.number]!.value;
+                  return Positioned(
+                    left: position.x * tileSize.width,
+                    top: position.y * tileSize.height,
+                    child: child!,
+                  );
                 },
-                complete: false,
-                constellation: constellation,
+                child: NewPuzzleTile(
+                  tile: tile,
+                  gridSize: gridSize,
+                  tileSize: tileSize,
+                  onTap: () {
+                    if (!puzzle!.canMoveTile(tile) ||
+                        controller.shuffleAnimationController.isAnimating ||
+                        controller.animationControllers.values.any((element) => element.isAnimating)) {
+                      return;
+                    }
+                    final updatedTiles = puzzle!.moveTile(tile);
+                    for (var tile in updatedTiles) {
+                      final animationController = controller.animationControllers[tile.number]!;
+                      controller.animations[tile.number] =
+                          controller.animatePosition(tile.positionTween, animationController);
+                      animationController.reset();
+                      animationController.forward();
+                    }
+                  },
+                  complete: false,
+                  constellation: constellation,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -193,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             Positioned.fill(
               child: AnimatedContainer(
                 color: !isSolving ? Color(0x00ffffff) : Color(0x20ffffff),
-                duration: Duration(milliseconds: 500),
+                duration: kThemeChangeDuration,
               ),
             ),
             Column(

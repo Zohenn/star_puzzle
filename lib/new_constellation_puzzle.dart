@@ -139,7 +139,7 @@ class NewConstellationPuzzle extends StatelessWidget {
                         },
                         child: Text('Solve'),
                         style: ButtonStyle(
-                          textStyle: MaterialStateProperty.all(TextStyle(fontSize: 18)),
+                          textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.button!.copyWith(fontSize: 18)),
                           padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
                         ),
                       ),
