@@ -6,10 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 
+enum SolvingState {
+  none,
+  solving,
+  animating,
+}
+
 class BaseService extends GetxService {
   late Future bootstrapFuture;
   final containerKey = GlobalKey();
   ui.Image? backgroundImage;
+  final solvingState = SolvingState.none.obs;
 
   @override
   void onInit() {

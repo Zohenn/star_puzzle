@@ -19,19 +19,17 @@ class ConstellationMeta {
   ui.Image? image;
   Uint8List? imageBytes;
 
-  Future loadImage(GlobalKey containerKey) async {
+  Future loadImage() async {
     if (image != null) {
       return;
     }
 
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder);
-    // final size = containerKey.currentContext!.size!;
     // todo: gridSize shouldn't be declared here
-    final gridSize = Size(100, 100);
+    final gridSize = Size(96, 96);
     final scale = MediaQuery.of(Get.context!).devicePixelRatio;
     final size = gridSize * scale;
-    final backgroundPainter = ConstellationBackgroundPainter(Get.find<BaseService>().backgroundImage, containerKey);
     final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, useCircles: true);
     // backgroundPainter.paint(canvas, size);
     canvas.drawRect(Offset.zero & size, Paint()..color = Color(0xff081229));
@@ -62,7 +60,7 @@ class ConstellationService extends GetxService {
     await Future.wait(_constellations.map((e) {
       final constellationMeta = ConstellationMeta(e);
       constellations.add(constellationMeta);
-      return constellationMeta.loadImage(containerKey);
+      return constellationMeta.loadImage();
     }));
   }
 }

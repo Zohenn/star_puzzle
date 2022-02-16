@@ -143,7 +143,6 @@ class Puzzle {
             (_emptyTile.currentPosition.y + distance.dy.sign).toInt())),
       );
       distance = tile.distanceTo(_emptyTile);
-      break;
     }
 
     final emptyTilePosition = _emptyTile.currentPosition.copy();
@@ -151,9 +150,6 @@ class Puzzle {
 
     tile.currentPosition = emptyTilePosition;
     _emptyTile.currentPosition = tilePosition;
-
-    tiles[tile.currentPosition.index] = tile;
-    tiles[_emptyTile.currentPosition.index] = _emptyTile;
 
     return updatedTiles..add(tile);
   }

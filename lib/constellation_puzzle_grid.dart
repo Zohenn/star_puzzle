@@ -11,21 +11,27 @@ import 'package:star_puzzle/utils.dart';
 final _shuffleAnimationDuration = Duration(milliseconds: 500);
 
 class _ConstellationPuzzleGridController extends GetxController with GetTickerProviderStateMixin {
-  _ConstellationPuzzleGridController(this.puzzle) {
+  _ConstellationPuzzleGridController(this.puzzle, this.onComplete) {
     shuffleAnimationController =
-        AnimationController(vsync: this, duration: kThemeChangeDuration + _shuffleAnimationDuration);
+        AnimationController(vsync: this, duration: kThemeChangeDuration * 3 + _shuffleAnimationDuration);
     for (var tile in puzzle.tiles) {
       shuffleAnimations[tile.number] = tile.originalPositionTween.animate(
         CurvedAnimation(
           parent: shuffleAnimationController,
           curve: Interval(
-            kThemeChangeDuration.inMilliseconds / shuffleAnimationController.duration!.inMilliseconds,
+            kThemeChangeDuration.inMilliseconds * 2 / shuffleAnimationController.duration!.inMilliseconds,
             1,
             curve: Curves.easeInOut,
           ),
         ),
       );
       final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
+      animationController.addStatusListener(((status) {
+        if(status == AnimationStatus.completed && puzzle.complete){
+          complete.value = true;
+          onComplete();
+        }
+      }));
       animationControllers[tile.number] = animationController;
       animations[tile.number] = animatePosition(tile.positionTween, animationController);
     }
@@ -37,11 +43,15 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
   }
 
   final Puzzle puzzle;
+  final VoidCallback onComplete;
+
   late AnimationController shuffleAnimationController;
   final shuffleAnimations = <int, Animation<TilePosition>>{};
   final shuffleAnimationFinished = false.obs;
   final animationControllers = <int, AnimationController>{};
   final animations = <int, Animation<TilePosition>>{};
+  final containerKey = GlobalKey();
+  final complete = false.obs;
 
   Animation<TilePosition> animatePosition(TilePositionTween tween, AnimationController controller) {
     return tween.animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
@@ -64,11 +74,13 @@ class ConstellationPuzzleGrid extends StatelessWidget {
     required this.puzzle,
     required this.constellation,
     required this.gridSize,
+    required this.onComplete,
   }) : super(key: key);
 
   final Puzzle? puzzle;
   final Constellation constellation;
   final Size gridSize;
+  final VoidCallback onComplete;
 
   Size get tileSize => gridSize / 3;
 
@@ -78,16 +90,17 @@ class ConstellationPuzzleGrid extends StatelessWidget {
       return SizedBox.shrink();
     }
     return GetBuilder<_ConstellationPuzzleGridController>(
-      init: _ConstellationPuzzleGridController(puzzle!),
+      init: _ConstellationPuzzleGridController(puzzle!, onComplete),
       global: false,
       didUpdateWidget: (oldWidget, state) {
-        if((oldWidget as GetBuilder<_ConstellationPuzzleGridController>).init!.puzzle != puzzle){
+        if ((oldWidget as GetBuilder<_ConstellationPuzzleGridController>).init!.puzzle != puzzle) {
           state.controller = state.widget.init;
           state.controller?.onStart();
         }
       },
       builder: (controller) => Obx(
         () => Stack(
+          key: controller.containerKey,
           fit: StackFit.expand,
           children: [
             for (var tile in puzzle!.tiles)
@@ -110,8 +123,8 @@ class ConstellationPuzzleGrid extends StatelessWidget {
                   gridSize: gridSize,
                   tileSize: tileSize,
                   onTap: () {
-                    if (!puzzle!.canMoveTile(tile) ||
-                        controller.shuffleAnimationController.isAnimating ||
+                    if (controller.complete() || !puzzle!.canMoveTile(tile) ||
+                        !controller.shuffleAnimationFinished() ||
                         controller.animationControllers.values.any((element) => element.isAnimating)) {
                       return;
                     }
@@ -124,8 +137,9 @@ class ConstellationPuzzleGrid extends StatelessWidget {
                       animationController.forward();
                     }
                   },
-                  complete: false,
+                  complete: controller.complete(),
                   constellation: constellation,
+                  containerKey: controller.containerKey,
                 ),
               ),
           ],
@@ -144,6 +158,7 @@ class NewPuzzleTile extends StatelessWidget {
     required this.onTap,
     required this.complete,
     required this.constellation,
+    required this.containerKey,
   }) : super(key: key);
 
   final Tile tile;
@@ -152,6 +167,7 @@ class NewPuzzleTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool complete;
   final Constellation constellation;
+  final GlobalKey containerKey;
 
   @override
   Widget build(BuildContext context) {
@@ -159,14 +175,16 @@ class NewPuzzleTile extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Container(
+    return AnimatedContainer(
       width: tileSize.width,
       height: tileSize.height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: complete ? BorderRadius.zero : BorderRadius.circular(8),
       ),
       clipBehavior: Clip.hardEdge,
-      padding: const EdgeInsets.all(1.0),
+      padding: complete ? EdgeInsets.zero : const EdgeInsets.all(1.0),
+      duration: kThemeChangeDuration,
+      curve: Curves.easeInOut,
       child: GestureDetector(
         onTap: onTap,
         child: CustomPaint(
@@ -176,6 +194,7 @@ class NewPuzzleTile extends StatelessWidget {
             tile.originalPosition.y.toInt(),
             gridSize,
             constellation,
+            containerKey,
           ),
           child: Align(
             alignment: Alignment.topLeft,
@@ -184,7 +203,7 @@ class NewPuzzleTile extends StatelessWidget {
               child: AnimatedDefaultTextStyle(
                 child: Text('${tile.number}'),
                 style: TextStyle(color: complete ? Colors.transparent : Colors.white.withOpacity(0.2)),
-                duration: Duration(milliseconds: 500),
+                duration: kThemeChangeDuration,
               ),
             ),
           ),
@@ -201,6 +220,7 @@ class NewPiecePainter extends CustomPainter {
     this.j,
     this.gridSize,
     this.constellation,
+    this.containerKey,
   );
 
   ui.Image? image;
@@ -208,6 +228,7 @@ class NewPiecePainter extends CustomPainter {
   int j;
   Size gridSize;
   Constellation constellation;
+  GlobalKey containerKey;
 
   Size get starPathSize => constellation.starSize != null ? Size.square(constellation.starSize!) : Size.square(12);
 
@@ -216,18 +237,36 @@ class NewPiecePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Size paddingSize = Size(tileSize.width - size.width, tileSize.height - size.height);
+    final context = containerKey.currentContext!;
+    final box = context.findRenderObject() as RenderBox;
+    final mqData = MediaQuery.of(context);
+    final pos = box.localToGlobal(Offset.zero);
+    final tilePos = pos + Offset(i * tileSize.width, j * tileSize.height);
     if (image != null) {
+      final imageSize = Size(image!.width.toDouble(), image!.height.toDouble());
+      final fittedSizes = applyBoxFit(BoxFit.cover, imageSize, mqData.size * mqData.devicePixelRatio);
+      final boxFitOffset = ((imageSize - fittedSizes.source) as Offset) / 2;
+      final scale = fittedSizes.source.width / fittedSizes.destination.width;
+      final tileImageSize = (tileSize * mqData.devicePixelRatio * scale);
+      final tileImageOffset = (boxFitOffset + (tilePos * mqData.devicePixelRatio * scale));
+      canvas.drawImageRect(
+        image!,
+        tileImageOffset & tileImageSize,
+        Offset.zero & size,
+        Paint(),
+      );
+    } else {
       canvas.drawRect(Offset.zero & size, Paint()..color = Color(0xff081229));
-      final starPaint = Paint()..color = Colors.white;
-      for (var star in constellation.stars) {
-        final starPath = getStarPath(starPathSize).shift(
-          star.pos.toOffset(gridSize) -
-              sizeToOffset(starPathSize) / 2 -
-              Offset(tileSize.width * i, tileSize.height * j) -
-              (sizeToOffset(paddingSize) / 2),
-        );
-        canvas.drawPath(starPath, starPaint);
-      }
+    }
+    final starPaint = Paint()..color = Colors.white;
+    for (var star in constellation.stars) {
+      final starPath = getStarPath(starPathSize).shift(
+        star.pos.toOffset(gridSize) -
+            sizeToOffset(starPathSize) / 2 -
+            Offset(tileSize.width * i, tileSize.height * j) -
+            (sizeToOffset(paddingSize) / 2),
+      );
+      canvas.drawPath(starPath, starPaint);
     }
   }
 

@@ -21,6 +21,7 @@ class ThemeProvider extends StatelessWidget {
         backgroundColor: Color(0xff081229),
         applyElevationOverlayColor: true,
         textTheme: _textTheme,
+        // textTheme: Typography.material2018().white,
         cardTheme: CardTheme(
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
