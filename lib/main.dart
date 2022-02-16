@@ -10,6 +10,7 @@ import 'package:star_puzzle/bootstrap.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/constellations/sagittarius.dart';
+import 'package:star_puzzle/new_constellation_puzzle.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
@@ -76,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool complete = true;
   bool showAnimation = false;
   late ConstellationMeta selectedConstellation;
+  bool isSolving = false;
 
   final gridSize = Size(300, 300);
   final size = 3;
@@ -190,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             )),
             Positioned.fill(
               child: AnimatedContainer(
-                color: complete ? Color(0x00ffffff) : Color(0x20ffffff),
+                color: !isSolving ? Color(0x00ffffff) : Color(0x20ffffff),
                 duration: Duration(milliseconds: 500),
               ),
             ),
@@ -201,103 +203,80 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     physics: NeverScrollableScrollPhysics(),
                     children: [
                       for (var constellation in constellations)
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                constellation.solved ? constellation.constellation.name : 'Unknown',
-                                style: GoogleFonts.josefinSlab(
-                                    textStyle: Theme.of(context)
-                                        .textTheme
-                                        .headline4!
-                                        .copyWith(color: constellation.solved ? Colors.white : Colors.white60)),
-                              ),
-                              SizedBox(height: 16),
-                              SizedBox.fromSize(
-                                size: gridSize,
-                                child: CustomPaint(
-                                  painter: ConstellationAnimationPainter(
-                                    constellation.constellationAnimation,
-                                    1,
-                                    starSize: constellation.constellation.starSize,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {},
-                                child: Text('Solve'),
-                                style: ButtonStyle(
-                                  textStyle: MaterialStateProperty.all(TextStyle(fontSize: 18)),
-                                  padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
-                                ),
-                              ),
-                            ],
-                          ),
+                        NewConstellationPuzzle(
+                          constellation: constellation,
+                          gridSize: gridSize,
+                          onSolvingStateChanged: (_isSolving) => setState(() {
+                            isSolving = _isSolving;
+                          }),
                         ),
                     ],
                   ),
                 ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Row(
-                    children: [
-                      for (var constellation in constellations) ...[
-                        AnimatedContainer(
-                          duration: kThemeChangeDuration,
-                          curve: Curves.easeInOut,
-                          transform: Matrix4.translationValues(0, selectedConstellation == constellation ? -8 : 0, 0),
-                          child: Card(
-                            clipBehavior: Clip.hardEdge,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            margin: EdgeInsets.zero,
-                            color: Colors.transparent,
-                            elevation: selectedConstellation == constellation ? 4 : 0,
-                            // shadowColor: Color(0xfffff8dc),
-                            child: Stack(
-                              children: [
-                                SizedBox.square(
-                                  dimension: 96,
-                                  child: Image.memory(
-                                    constellation.imageBytes!,
-                                    fit: BoxFit.cover,
+                AnimatedContainer(
+                  duration: kThemeChangeDuration,
+                  curve: Curves.easeInOut,
+                  transform: Matrix4.translationValues(0, isSolving ? 96 + 2 * 24 : 0, 0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Row(
+                      children: [
+                        for (var constellation in constellations) ...[
+                          AnimatedContainer(
+                            duration: kThemeChangeDuration,
+                            curve: Curves.easeInOut,
+                            transform: Matrix4.translationValues(0, selectedConstellation == constellation ? -8 : 0, 0),
+                            child: Card(
+                              clipBehavior: Clip.hardEdge,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              margin: EdgeInsets.zero,
+                              color: Colors.transparent,
+                              elevation: selectedConstellation == constellation ? 4 : 0,
+                              // shadowColor: Color(0xfffff8dc),
+                              child: Stack(
+                                children: [
+                                  SizedBox.square(
+                                    dimension: 96,
+                                    child: Image.memory(
+                                      constellation.imageBytes!,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                                Positioned.fill(
-                                  child: AnimatedContainer(
-                                    duration: kThemeChangeDuration,
-                                    color: selectedConstellation == constellation
-                                        ? Colors.transparent
-                                        : Colors.white.withOpacity(0.1),
+                                  Positioned.fill(
+                                    child: AnimatedContainer(
+                                      duration: kThemeChangeDuration,
+                                      color: selectedConstellation == constellation
+                                          ? Colors.transparent
+                                          : Colors.white.withOpacity(0.1),
+                                    ),
                                   ),
-                                ),
-                                Positioned.fill(
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: Builder(
-                                      builder: (context) => InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            selectedConstellation = constellation;
-                                            DefaultTabController.of(context)!
-                                                .animateTo(constellations.indexOf(constellation));
-                                          });
-                                        },
+                                  Positioned.fill(
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: Builder(
+                                        builder: (context) => InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedConstellation = constellation;
+                                              DefaultTabController.of(context)!
+                                                  .animateTo(constellations.indexOf(constellation));
+                                            });
+                                          },
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        if (constellation != constellations.last) SizedBox(width: 16),
+                          if (constellation != constellations.last) SizedBox(width: 16),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ],

@@ -96,6 +96,10 @@ class Tile {
     _positionTween ??= TilePositionTween(begin: _lastPosition ?? currentPosition, end: currentPosition);
     return _positionTween!;
   }
+
+  TilePositionTween get originalPositionTween {
+    return TilePositionTween(begin: originalPosition, end: currentPosition);
+  }
 }
 
 class Puzzle {
