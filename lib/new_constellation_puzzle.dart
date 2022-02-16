@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
@@ -7,10 +9,12 @@ import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/star_path.dart';
+import 'package:star_puzzle/widgets/theme_provider.dart';
 
-import 'constellation.dart';
+import 'package:star_puzzle/constellation.dart';
 
-class _ConstellationPuzzleController extends GetxController {
+class _ConstellationPuzzleController extends GetxController with GetTickerProviderStateMixin {
   _ConstellationPuzzleController(this.constellation);
 
   final ConstellationMeta constellation;
@@ -19,19 +23,81 @@ class _ConstellationPuzzleController extends GetxController {
   Ticker? ticker;
   final previousTime = 0.obs;
   final isAnimatingConstellation = false.obs;
+  AnimationController? nameAnimationController;
+  Animation? nameAnimation;
+  Animation? starLeaveAnimation;
+  Animation? starEntryLeaveTranslateAnimation;
+  Animation? starEntryLeaveScaleAnimation;
+  Animation? starRotateAnimation;
   final showName = false.obs;
 
   ConstellationAnimation get constellationAnimation => constellation.constellationAnimation;
 
   void startAnimation() {
+    final starEntryAnimationDuration = Duration(milliseconds: 300);
+    final nameAnimationDuration = Duration(milliseconds: constellation.constellation.name.length * 100);
+    final starLeaveAnimationDuration = Duration(milliseconds: 300);
+    final fullNameAnimationDuration = starEntryAnimationDuration + nameAnimationDuration + starLeaveAnimationDuration;
+    nameAnimationController = AnimationController(vsync: this, duration: fullNameAnimationDuration);
+    starEntryLeaveTranslateAnimation = TweenSequence(
+      [
+        TweenSequenceItem(
+          tween: Tween(begin: -1.0, end: 0.1),
+          weight: starEntryAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+        TweenSequenceItem(
+          tween: ConstantTween(0.1),
+          weight: nameAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+        TweenSequenceItem(
+          tween: Tween(begin: 0.1, end: 1.0),
+          weight: starLeaveAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+      ],
+    ).animate(nameAnimationController!);
+    starEntryLeaveScaleAnimation = TweenSequence(
+      [
+        TweenSequenceItem(
+          tween: Tween(begin: 0.0, end: 1.0),
+          weight: starEntryAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+        TweenSequenceItem(
+          tween: ConstantTween(1.0),
+          weight: nameAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+        TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.0),
+          weight: starLeaveAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
+        ),
+      ],
+    ).animate(nameAnimationController!);
+    starRotateAnimation = Tween(begin: 0.0, end: constellation.constellation.name.length * 0.3).animate(nameAnimationController!);
+    nameAnimation = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: nameAnimationController!,
+        curve: Interval(
+          starEntryAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds,
+          (starEntryAnimationDuration.inMilliseconds + nameAnimationDuration.inMilliseconds) /
+              fullNameAnimationDuration.inMilliseconds,
+          curve: Curves.linear,
+        ),
+      ),
+    );
+    nameAnimationController!.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        onAnimationEnd();
+      }
+    });
     constellationAnimation.stars.first.shouldFill = true;
     ticker = Ticker((elapsed) {
+      // constellationAnimation.skipForward();
       var finished = constellationAnimation.tick(elapsed.inMilliseconds - previousTime());
       previousTime.value = elapsed.inMilliseconds;
       if (finished) {
         ticker!.stop();
         constellation.loadImage();
         showName.value = true;
+        nameAnimationController!.forward();
       }
     });
     ticker!.start();
@@ -53,6 +119,7 @@ class _ConstellationPuzzleController extends GetxController {
   @override
   void onClose() {
     ticker?.dispose();
+    nameAnimationController?.dispose();
     super.onClose();
   }
 }
@@ -108,18 +175,86 @@ class NewConstellationPuzzle extends StatelessWidget {
                 children: [
                   Obx(
                     () => controller.isAnimatingConstellation()
-                        ? AnimatedDefaultTextStyle(
-                            duration: kThemeChangeDuration * 3,
-                            curve: Curves.easeInOut,
-                            style: GoogleFonts.josefinSlab(
-                              textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                    color: controller.showName() ? Colors.white : Colors.transparent,
+                        ? Stack(
+                            children: [
+                              Text(
+                                constellation.constellation.name,
+                                style: GoogleFonts.josefinSlab(
+                                  textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                        color: Colors.transparent,
+                                      ),
+                                ),
+                              ),
+                              Stack(
+                                fit: StackFit.passthrough,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  AnimatedBuilder(
+                                    animation: controller.nameAnimation!,
+                                    builder: (context, child) => ClipRect(
+                                      child: ShaderMask(
+                                        blendMode: BlendMode.srcIn,
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: [cornsilk, Colors.transparent],
+                                          stops: [controller.nameAnimation!.value, 1],
+                                        ).createShader(
+                                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          widthFactor: controller.nameAnimation!.value,
+                                          child: Text(
+                                            constellation.constellation.name,
+                                            style: GoogleFonts.josefinSlab(
+                                              textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                                    color: cornsilk,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                            ),
-                            child: Text(
-                              constellation.constellation.name,
-                            ),
-                            onEnd: controller.onAnimationEnd,
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints) => AnimatedBuilder(
+                                          animation: controller.nameAnimationController!,
+                                          builder: (context, child) => Transform.translate(
+                                            offset: Offset(
+                                              constraints.maxWidth / 2 +
+                                                  controller.starEntryLeaveTranslateAnimation!.value *
+                                                      constraints.maxWidth *
+                                                      2,
+                                              0,
+                                            ),
+                                            child: ClipRect(
+                                              child: Transform.scale(
+                                                scale: controller.starEntryLeaveScaleAnimation!.value,
+                                                child: child,
+                                              ),
+                                            ),
+                                          ),
+                                          child: AnimatedBuilder(
+                                            animation: controller.starRotateAnimation!,
+                                            builder: (context, child) => Transform.rotate(
+                                              angle: controller.starRotateAnimation!.value * 360 * pi / 180,
+                                              child: CustomPaint(
+                                                painter: StarPainter(),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           )
                         : Obx(
                             () => AnimatedDefaultTextStyle(
@@ -129,7 +264,7 @@ class NewConstellationPuzzle extends StatelessWidget {
                                 textStyle: Theme.of(context).textTheme.headline4!.copyWith(
                                       color: (controller.isSolving())
                                           ? Colors.transparent
-                                          : (constellation.solved ? Colors.white : Colors.white60),
+                                          : (constellation.solved ? cornsilk : Colors.white60),
                                     ),
                               ),
                               child: Text(
@@ -239,5 +374,17 @@ class NewConstellationPuzzle extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class StarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(getStarPath(size), Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }

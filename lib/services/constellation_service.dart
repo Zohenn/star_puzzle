@@ -17,13 +17,9 @@ class ConstellationMeta {
   ConstellationAnimation constellationAnimation;
   bool solved = false;
   ui.Image? image;
-  Uint8List? imageBytes;
+  Rxn<Uint8List> imageBytes = Rxn<Uint8List>();
 
   Future loadImage() async {
-    if (image != null) {
-      return;
-    }
-
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder);
     // todo: gridSize shouldn't be declared here
@@ -37,7 +33,12 @@ class ConstellationMeta {
     image = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
 
     final byteData = await image!.toByteData(format: ui.ImageByteFormat.rawUnmodified);
-    imageBytes = Uint8List.view(byteData!.buffer);
+    imageBytes.value = Uint8List.view(byteData!.buffer);
+  }
+
+  Future loadFinishedImage() async {
+    constellationAnimation.skipForward();
+    await loadImage();
   }
 }
 

@@ -118,4 +118,14 @@ class ConstellationAnimation {
 
     return stars.every((element) => element.fill == 1) && lines.every((element) => element.fill == 1);
   }
+
+  void skipForward() {
+    for(var star in stars){
+      star.fill = 1;
+    }
+
+    for(var line in lines){
+      line.fill = 1;
+    }
+  }
 }

@@ -133,9 +133,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                   children: [
                                     SizedBox.square(
                                       dimension: 96,
-                                      child: Image.memory(
-                                        constellation.imageBytes!,
-                                        fit: BoxFit.cover,
+                                      child: Obx(
+                                        () => Image.memory(
+                                          constellation.imageBytes()!,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
                                     Positioned.fill(
