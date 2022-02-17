@@ -10,6 +10,7 @@ enum SolvingState {
   none,
   solving,
   animating,
+  done,
 }
 
 class BaseService extends GetxService {
