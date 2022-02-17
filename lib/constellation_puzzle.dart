@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/star_path.dart';
+import 'package:star_puzzle/utils.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 
 import 'package:star_puzzle/constellation.dart';
@@ -20,6 +22,10 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   final ConstellationMeta constellation;
   final isSolving = false.obs;
   final puzzle = Rxn<Puzzle>();
+  final moves = 0.obs;
+  final elapsedSeconds = 0.obs;
+  Stopwatch? stopwatch;
+  Timer? elapsedSecondsTimer;
   Ticker? ticker;
   final previousTime = 0.obs;
   final isAnimatingConstellation = false.obs;
@@ -32,6 +38,38 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   final showName = false.obs;
 
   ConstellationAnimation get constellationAnimation => constellation.constellationAnimation;
+
+  String get elapsedTime => formatSeconds(elapsedSeconds());
+
+  void initPuzzle() {
+    // puzzle.value = Puzzle.generate(3);
+    var list = [1, 2, 3, 4, 5, 6, 7, 9, 8];
+    TilePosition numberToPosition(int i) {
+      return TilePosition(i % 3, (i ~/ 3).toDouble());
+    }
+
+    var tiles = [
+      for (var i = 0; i < 9; i++)
+        Tile(numberToPosition(list[i] - 1), numberToPosition(i), list[i] == 9),
+    ];
+    puzzle.value = Puzzle(
+      tiles,
+    );
+    moves.value = 0;
+    elapsedSeconds.value = 0;
+  }
+
+  void startTimer() {
+    stopwatch = Stopwatch()..start();
+    elapsedSecondsTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      elapsedSeconds.value = stopwatch!.elapsedMilliseconds ~/ 1000;
+    });
+  }
+
+  void cancelPuzzle() {
+    stopwatch?.stop();
+    elapsedSecondsTimer?.cancel();
+  }
 
   void startAnimation() {
     final starEntryAnimationDuration = Duration(milliseconds: 300);
@@ -71,7 +109,8 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
         ),
       ],
     ).animate(nameAnimationController!);
-    starRotateAnimation = Tween(begin: 0.0, end: constellation.constellation.name.length * 0.3).animate(nameAnimationController!);
+    starRotateAnimation =
+        Tween(begin: 0.0, end: constellation.constellation.name.length * 0.3).animate(nameAnimationController!);
     nameAnimation = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: nameAnimationController!,
@@ -110,14 +149,28 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
     Get.find<BaseService>().solvingState.value = SolvingState.none;
   }
 
+  void onMove() {
+    moves.value++;
+  }
+
   void onComplete() {
-    constellation.solved = true;
+    constellation.solved.value = true;
+    stopwatch?.stop();
+    elapsedSecondsTimer?.cancel();
+    if(constellation.bestMoves() == null || moves() < constellation.bestMoves()!){
+      constellation.bestMoves.value = moves();
+    }
+    if(constellation.bestTime() == null || elapsedSeconds() < constellation.bestTime()!){
+      constellation.bestTime.value = elapsedSeconds();
+    }
     isSolving.value = false;
     startAnimation();
   }
 
   @override
   void onClose() {
+    stopwatch?.stop();
+    elapsedSecondsTimer?.cancel();
     ticker?.dispose();
     nameAnimationController?.dispose();
     super.onClose();
@@ -147,22 +200,54 @@ class ConstellationPuzzle extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerRight,
               child: Obx(
-                () => AnimatedOpacity(
-                  opacity: controller.isSolving() ? 1 : 0,
+                () => AnimatedCrossFade(
+                  alignment: Alignment.topRight,
                   duration: kThemeChangeDuration,
-                  curve: Curves.easeInOut,
-                  child: Column(
+                  firstCurve: Curves.easeInOut,
+                  secondCurve: Curves.easeInOut,
+                  crossFadeState: controller.isSolving() || Get.find<BaseService>().solvingState() == SolvingState.animating ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                  firstChild: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (constellation.solved()) ...[
+                        Text('FEWEST MOVES', style: Theme.of(context).textTheme.caption),
+                        Obx(() => Text(constellation.bestMoves().toString(), style: GoogleFonts.poppins())),
+                        SizedBox(height: 16),
+                        Text('BEST TIME', style: Theme.of(context).textTheme.caption),
+                        Obx(() => Text(formatSeconds(constellation.bestTime()!).toString(), style: GoogleFonts.poppins())),
+                        SizedBox(height: 16),
+                      ],
+                    ],
+                  ),
+                  secondChild: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('MOVES', style: Theme.of(context).textTheme.caption),
-                      Text('0'),
+                      Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
                       SizedBox(height: 16),
                       Text('TIME', style: Theme.of(context).textTheme.caption),
-                      Text('0:00'),
+                      Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
                       SizedBox(height: 16),
                     ],
                   ),
+                  layoutBuilder: (Widget topChild, Key topChildKey, Widget bottomChild, Key bottomChildKey) {
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      fit: StackFit.loose,
+                      children: <Widget>[
+                        Container(
+                          key: bottomChildKey,
+                          child: bottomChild,
+                        ),
+                        Container(
+                          key: topChildKey,
+                          child: topChild,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -264,11 +349,11 @@ class ConstellationPuzzle extends StatelessWidget {
                                 textStyle: Theme.of(context).textTheme.headline4!.copyWith(
                                       color: (controller.isSolving())
                                           ? Colors.transparent
-                                          : (constellation.solved ? cornsilk : Colors.white60),
+                                          : (constellation.solved() ? cornsilk : Colors.white60),
                                     ),
                               ),
                               child: Text(
-                                constellation.solved ? constellation.constellation.name : 'Unknown',
+                                constellation.solved() ? constellation.constellation.name : 'Unknown',
                               ),
                             ),
                           ),
@@ -299,6 +384,8 @@ class ConstellationPuzzle extends StatelessWidget {
                               puzzle: controller.puzzle(),
                               constellation: constellation.constellation,
                               gridSize: gridSize,
+                              onShuffleEnd: controller.startTimer,
+                              onMove: controller.onMove,
                               onComplete: controller.onComplete,
                             ),
                           ),
@@ -332,24 +419,9 @@ class ConstellationPuzzle extends StatelessWidget {
                       child: TextButton(
                         onPressed: () {
                           if (!controller.isSolving()) {
-                            // controller.puzzle.value = Puzzle.generate(3);
-                            var list = [1, 2, 3, 4, 5, 6, 7, 9, 8];
-                            TilePosition numberToPosition(int i) {
-                              return TilePosition(i % 3, (i ~/ 3).toDouble());
-                            }
-
-                            var tiles = [
-                              for (var i = 0; i < 9; i++)
-                                Tile(numberToPosition(list[i] - 1), numberToPosition(i), list[i] == 9),
-                            ];
-                            controller.puzzle.value = Puzzle(
-                              tiles,
-                            );
-                            // controller.puzzle.value = Puzzle([
-                            //   for (var j = 0.0; j < 3; j++)
-                            //     for (var i = 0.0; i < 3; i++)
-                            //       Tile(TilePosition(i, j), TilePosition(i, j), i == 2 && j == 2),
-                            // ]);
+                            controller.initPuzzle();
+                          } else {
+                            controller.cancelPuzzle();
                           }
                           controller.isSolving.value = !controller.isSolving();
                           baseService.solvingState.value =

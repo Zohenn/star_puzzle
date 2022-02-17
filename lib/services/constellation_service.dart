@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
@@ -15,7 +14,9 @@ class ConstellationMeta {
 
   final Constellation constellation;
   ConstellationAnimation constellationAnimation;
-  bool solved = false;
+  final bestMoves = RxnInt();
+  final bestTime = RxnInt();
+  final solved = false.obs;
   ui.Image? image;
   Rxn<Uint8List> imageBytes = Rxn<Uint8List>();
 
@@ -28,7 +29,7 @@ class ConstellationMeta {
     final size = gridSize * scale;
     final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, useCircles: true);
     // backgroundPainter.paint(canvas, size);
-    canvas.drawRect(Offset.zero & size, Paint()..color = Color(0xff081229));
+    canvas.drawRect(Offset.zero & size, Paint()..color = Get.theme.backgroundColor);
     foregroundPainter.paint(canvas, size);
     image = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
 

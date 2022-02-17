@@ -11,7 +11,7 @@ import 'package:star_puzzle/utils.dart';
 final _shuffleAnimationDuration = Duration(milliseconds: 500);
 
 class _ConstellationPuzzleGridController extends GetxController with GetTickerProviderStateMixin {
-  _ConstellationPuzzleGridController(this.puzzle, this.onComplete) {
+  _ConstellationPuzzleGridController(this.puzzle, this.onShuffleEnd, this.onComplete) {
     shuffleAnimationController =
         AnimationController(vsync: this, duration: kThemeChangeDuration * 3 + _shuffleAnimationDuration);
     for (var tile in puzzle.tiles) {
@@ -38,11 +38,15 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
 
     shuffleAnimationController.addStatusListener((status) {
       shuffleAnimationFinished.value = status == AnimationStatus.completed;
+      if(shuffleAnimationFinished()){
+        onShuffleEnd();
+      }
     });
     shuffleAnimationController.forward();
   }
 
   final Puzzle puzzle;
+  final VoidCallback onShuffleEnd;
   final VoidCallback onComplete;
 
   late AnimationController shuffleAnimationController;
@@ -74,12 +78,16 @@ class ConstellationPuzzleGrid extends StatelessWidget {
     required this.puzzle,
     required this.constellation,
     required this.gridSize,
+    required this.onShuffleEnd,
+    required this.onMove,
     required this.onComplete,
   }) : super(key: key);
 
   final Puzzle? puzzle;
   final Constellation constellation;
   final Size gridSize;
+  final VoidCallback onShuffleEnd;
+  final VoidCallback onMove;
   final VoidCallback onComplete;
 
   Size get tileSize => gridSize / 3;
@@ -90,14 +98,14 @@ class ConstellationPuzzleGrid extends StatelessWidget {
       return SizedBox.shrink();
     }
     return GetBuilder<_ConstellationPuzzleGridController>(
-      init: _ConstellationPuzzleGridController(puzzle!, onComplete),
+      init: _ConstellationPuzzleGridController(puzzle!, onShuffleEnd, onComplete),
       global: false,
-      didUpdateWidget: (oldWidget, state) {
-        if ((oldWidget as GetBuilder<_ConstellationPuzzleGridController>).init!.puzzle != puzzle) {
-          state.controller = state.widget.init;
-          state.controller?.onStart();
-        }
-      },
+      // didUpdateWidget: (oldWidget, state) {
+      //   if ((oldWidget as GetBuilder<_ConstellationPuzzleGridController>).init!.puzzle != puzzle) {
+      //     state.controller = state.widget.init;
+      //     state.controller?.onStart();
+      //   }
+      // },
       builder: (controller) => Obx(
         () => Stack(
           key: controller.containerKey,
@@ -136,6 +144,7 @@ class ConstellationPuzzleGrid extends StatelessWidget {
                       animationController.reset();
                       animationController.forward();
                     }
+                    onMove();
                   },
                   complete: controller.complete(),
                   constellation: constellation,
