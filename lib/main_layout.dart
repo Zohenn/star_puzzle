@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:star_puzzle/constellation_puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/widgets/background_image_renderer.dart';
 
 class _MainLayoutController extends GetxController {
   final selectedConstellation = Rxn<ConstellationMeta>();
@@ -43,6 +44,7 @@ class MainLayout extends StatelessWidget {
                   filterQuality: FilterQuality.high,
                 ),
               ),
+              // BackgroundImageRenderer(gridSize: gridSize),
               Positioned.fill(
                 child: Obx(
                   () => AnimatedContainer(
@@ -51,25 +53,26 @@ class MainLayout extends StatelessWidget {
                   ),
                 ),
               ),
-              Column(
+              TabBarView(
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  Expanded(
-                    child: TabBarView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        for (var constellation in constellations)
-                          ConstellationPuzzle(
-                            constellation: constellation,
-                            gridSize: gridSize,
-                          ),
-                      ],
+                  for (var constellation in constellations)
+                    ConstellationPuzzle(
+                      constellation: constellation,
+                      gridSize: gridSize,
                     ),
-                  ),
-                  Obx(
-                    () => AnimatedContainer(
-                      duration: kThemeChangeDuration,
-                      curve: Curves.easeInOut,
-                      transform: Matrix4.translationValues(0, solvingState != SolvingState.none ? 96 + 2 * 24 : 0, 0),
+                ],
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Obx(
+                  () => AnimatedContainer(
+                    duration: kThemeChangeDuration,
+                    curve: Curves.easeInOut,
+                    transform: Matrix4.translationValues(0, solvingState != SolvingState.none ? 96 + 2 * 24 : 0, 0),
+                    child: Center(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -133,7 +136,7 @@ class MainLayout extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,8 @@ import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
+import 'package:star_puzzle/widgets/background_image_renderer.dart';
+import 'package:star_puzzle/widgets/child_position_notifier.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 
 import 'package:star_puzzle/constellation.dart';
@@ -37,6 +40,9 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   Animation? starEntryLeaveScaleAnimation;
   Animation? starRotateAnimation;
   final showName = false.obs;
+
+  final containerKey = GlobalKey();
+  final gridKey = GlobalKey();
 
   ConstellationAnimation get constellationAnimation => constellation.constellationAnimation;
 
@@ -234,225 +240,84 @@ class ConstellationPuzzle extends StatelessWidget {
     return GetBuilder<_ConstellationPuzzleController>(
       init: _ConstellationPuzzleController(constellation),
       global: false,
-      builder: (controller) => Row(
+      builder: (controller) => Stack(
+        key: controller.containerKey,
         children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Obx(
-                () => AnimatedSwitcher(
-                  duration: kThemeChangeDuration,
-                  switchInCurve: Curves.easeInOut,
-                  switchOutCurve: Curves.easeInOut,
-                  child: baseService.solvingState() == SolvingState.none
-                      ? Obx(
-                          () => Opacity(
-                            opacity: constellation.solved() ? 1 : 0,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('FEWEST MOVES', style: Theme.of(context).textTheme.caption),
-                                Obx(
-                                  () => Text(
-                                    !constellation.solved() ? 'unavailable' : constellation.bestMoves().toString(),
-                                    style: GoogleFonts.poppins(),
-                                  ),
-                                ),
-                                SizedBox(height: 16),
-                                Text('BEST TIME', style: Theme.of(context).textTheme.caption),
-                                Obx(
-                                  () => Text(
-                                    !constellation.solved()
-                                        ? 'unavailable'
-                                        : formatSeconds(constellation.bestTime()!).toString(),
-                                    style: GoogleFonts.poppins(),
-                                  ),
-                                ),
-                                SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        )
-                      : Obx(
-                          () => AnimatedOpacity(
-                            opacity: baseService.solvingState() == SolvingState.animating ? 0 : 1,
-                            duration: kThemeChangeDuration,
-                            curve: Curves.easeInOut,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(minWidth: 94),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('MOVES', style: Theme.of(context).textTheme.caption),
-                                  Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
-                                  SizedBox(height: 16),
-                                  Text('TIME', style: Theme.of(context).textTheme.caption),
-                                  Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
-                                  SizedBox(height: 16),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      fit: StackFit.loose,
-                      children: <Widget>[
-                        ...previousChildren,
-                        if (currentChild != null) currentChild,
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
+          Positioned.fill(
+            child: BackgroundImageRenderer(
+                gridSize: gridSize, containerKey: controller.containerKey, gridKey: controller.gridKey),
           ),
-          Expanded(
-            flex: 2,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Obx(
-                    () => controller.isAnimatingConstellation()
-                        ? Stack(
-                            children: [
-                              Text(
-                                constellation.constellation.name,
-                                style: GoogleFonts.josefinSlab(
-                                  textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                        color: Colors.transparent,
-                                      ),
-                                ),
-                              ),
-                              Stack(
-                                fit: StackFit.passthrough,
-                                clipBehavior: Clip.none,
-                                children: [
-                                  AnimatedBuilder(
-                                    animation: controller.nameAnimation!,
-                                    builder: (context, child) => ClipRect(
-                                      child: ShaderMask(
-                                        blendMode: BlendMode.srcIn,
-                                        shaderCallback: (bounds) => LinearGradient(
-                                          colors: [cornsilk, Colors.transparent],
-                                          stops: [controller.nameAnimation!.value, 1],
-                                        ).createShader(
-                                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                                        ),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          widthFactor: controller.nameAnimation!.value,
-                                          child: Text(
-                                            constellation.constellation.name,
-                                            style: GoogleFonts.josefinSlab(
-                                              textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                                    color: cornsilk,
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    child: AspectRatio(
-                                      aspectRatio: 1,
-                                      child: LayoutBuilder(
-                                        builder: (context, constraints) => AnimatedBuilder(
-                                          animation: controller.nameAnimationController!,
-                                          builder: (context, child) => Transform.translate(
-                                            offset: Offset(
-                                              constraints.maxWidth / 2 +
-                                                  controller.starEntryLeaveTranslateAnimation!.value *
-                                                      constraints.maxWidth *
-                                                      2,
-                                              0,
-                                            ),
-                                            child: ClipRect(
-                                              child: Transform.scale(
-                                                scale: controller.starEntryLeaveScaleAnimation!.value,
-                                                child: child,
-                                              ),
-                                            ),
-                                          ),
-                                          child: AnimatedBuilder(
-                                            animation: controller.starRotateAnimation!,
-                                            builder: (context, child) => Transform.rotate(
-                                              angle: controller.starRotateAnimation!.value * 360 * pi / 180,
-                                              child: CustomPaint(
-                                                painter: StarPainter(),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          )
-                        : Obx(
-                            () => AnimatedDefaultTextStyle(
-                              duration: kThemeChangeDuration,
-                              curve: Curves.easeInOut,
-                              style: GoogleFonts.josefinSlab(
-                                textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                      color: (controller.isSolving())
-                                          ? Colors.transparent
-                                          : (constellation.solved() ? cornsilk : Colors.white60),
-                                    ),
-                              ),
-                              child: Text(
-                                constellation.solved() ? constellation.constellation.name : 'Unknown',
-                              ),
-                            ),
-                          ),
-                  ),
-                  SizedBox(height: 16),
-                  SizedBox.fromSize(
-                    size: gridSize,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24 * 2 + 96),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
                     child: Obx(
                       () => AnimatedSwitcher(
                         duration: kThemeChangeDuration,
-                        child: controller.isSolving()
-                            ? ConstrainedBox(
-                                constraints: BoxConstraints.tight(gridSize),
-                                child: Obx(
-                                  () => ConstellationPuzzleGrid(
-                                    puzzle: controller.puzzle(),
-                                    constellation: constellation.constellation,
-                                    gridSize: gridSize,
-                                    onShuffleEnd: controller.startTimer,
-                                    onMove: controller.onMove,
-                                    onComplete: controller.onComplete,
+                        switchInCurve: Curves.easeInOut,
+                        switchOutCurve: Curves.easeInOut,
+                        child: baseService.solvingState() == SolvingState.none
+                            ? Obx(
+                                () => Opacity(
+                                  opacity: constellation.solved() ? 1 : 0,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('FEWEST MOVES', style: Theme.of(context).textTheme.caption),
+                                      Obx(
+                                        () => Text(
+                                          !constellation.solved()
+                                              ? 'unavailable'
+                                              : constellation.bestMoves().toString(),
+                                          style: GoogleFonts.poppins(),
+                                        ),
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text('BEST TIME', style: Theme.of(context).textTheme.caption),
+                                      Obx(
+                                        () => Text(
+                                          !constellation.solved()
+                                              ? 'unavailable'
+                                              : formatSeconds(constellation.bestTime()!).toString(),
+                                          style: GoogleFonts.poppins(),
+                                        ),
+                                      ),
+                                      SizedBox(height: 16),
+                                    ],
                                   ),
                                 ),
                               )
                             : Obx(
-                                () {
-                                  controller.previousTime();
-                                  return CustomPaint(
-                                    painter: ConstellationAnimationPainter(
-                                      constellation.constellationAnimation,
-                                      1,
-                                      starSize: constellation.constellation.starSize,
+                                () => AnimatedOpacity(
+                                  opacity: baseService.solvingState() == SolvingState.animating ? 0 : 1,
+                                  duration: kThemeChangeDuration,
+                                  curve: Curves.easeInOut,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(minWidth: 94),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('MOVES', style: Theme.of(context).textTheme.caption),
+                                        Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
+                                        SizedBox(height: 16),
+                                        Text('TIME', style: Theme.of(context).textTheme.caption),
+                                        Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
+                                        SizedBox(height: 16),
+                                      ],
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
                               ),
                         layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
                           return Stack(
                             alignment: Alignment.center,
-                            fit: StackFit.passthrough,
+                            clipBehavior: Clip.none,
+                            fit: StackFit.loose,
                             children: <Widget>[
                               ...previousChildren,
                               if (currentChild != null) currentChild,
@@ -462,30 +327,187 @@ class ConstellationPuzzle extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  // todo: make button impossible to tap when invisible
-                  TextButtonTheme(
-                    data: TextButtonThemeData(
-                      style: Theme.of(context).textButtonTheme.style!.copyWith(
-                            textStyle:
-                                MaterialStateProperty.all(Theme.of(context).textTheme.button!.copyWith(fontSize: 18)),
-                            padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Obx(
+                          () => controller.isAnimatingConstellation()
+                              ? Stack(
+                                  children: [
+                                    Text(
+                                      constellation.constellation.name,
+                                      style: GoogleFonts.josefinSlab(
+                                        textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                              color: Colors.transparent,
+                                            ),
+                                      ),
+                                    ),
+                                    Stack(
+                                      fit: StackFit.passthrough,
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        AnimatedBuilder(
+                                          animation: controller.nameAnimation!,
+                                          builder: (context, child) => ClipRect(
+                                            child: ShaderMask(
+                                              blendMode: BlendMode.srcIn,
+                                              shaderCallback: (bounds) => LinearGradient(
+                                                colors: [cornsilk, Colors.transparent],
+                                                stops: [controller.nameAnimation!.value, 1],
+                                              ).createShader(
+                                                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                              ),
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                widthFactor: controller.nameAnimation!.value,
+                                                child: Text(
+                                                  constellation.constellation.name,
+                                                  style: GoogleFonts.josefinSlab(
+                                                    textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                                          color: cornsilk,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 0,
+                                          right: 0,
+                                          bottom: 0,
+                                          child: AspectRatio(
+                                            aspectRatio: 1,
+                                            child: LayoutBuilder(
+                                              builder: (context, constraints) => AnimatedBuilder(
+                                                animation: controller.nameAnimationController!,
+                                                builder: (context, child) => Transform.translate(
+                                                  offset: Offset(
+                                                    constraints.maxWidth / 2 +
+                                                        controller.starEntryLeaveTranslateAnimation!.value *
+                                                            constraints.maxWidth *
+                                                            2,
+                                                    0,
+                                                  ),
+                                                  child: ClipRect(
+                                                    child: Transform.scale(
+                                                      scale: controller.starEntryLeaveScaleAnimation!.value,
+                                                      child: child,
+                                                    ),
+                                                  ),
+                                                ),
+                                                child: AnimatedBuilder(
+                                                  animation: controller.starRotateAnimation!,
+                                                  builder: (context, child) => Transform.rotate(
+                                                    angle: controller.starRotateAnimation!.value * 360 * pi / 180,
+                                                    child: CustomPaint(
+                                                      painter: StarPainter(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              : Obx(
+                                  () => AnimatedDefaultTextStyle(
+                                    duration: kThemeChangeDuration,
+                                    curve: Curves.easeInOut,
+                                    style: GoogleFonts.josefinSlab(
+                                      textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                            color: (controller.isSolving())
+                                                ? Colors.transparent
+                                                : (constellation.solved() ? cornsilk : Colors.white60),
+                                          ),
+                                    ),
+                                    child: Text(
+                                      constellation.solved() ? constellation.constellation.name : 'Unknown',
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        SizedBox(height: 16),
+                        SizedBox.fromSize(
+                          key: controller.gridKey,
+                          size: gridSize,
+                          child: Obx(
+                            () => AnimatedSwitcher(
+                              duration: kThemeChangeDuration,
+                              child: controller.isSolving()
+                                  ? ConstrainedBox(
+                                      constraints: BoxConstraints.tight(gridSize),
+                                      child: Obx(
+                                        () => ConstellationPuzzleGrid(
+                                          puzzle: controller.puzzle(),
+                                          constellation: constellation.constellation,
+                                          gridSize: gridSize,
+                                          onShuffleEnd: controller.startTimer,
+                                          onMove: controller.onMove,
+                                          onComplete: controller.onComplete,
+                                        ),
+                                      ),
+                                    )
+                                  : Obx(
+                                      () {
+                                        controller.previousTime();
+                                        return CustomPaint(
+                                          painter: ConstellationAnimationPainter(
+                                            constellation.constellationAnimation,
+                                            1,
+                                            starSize: constellation.constellation.starSize,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                              layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  fit: StackFit.passthrough,
+                                  children: <Widget>[
+                                    ...previousChildren,
+                                    if (currentChild != null) currentChild,
+                                  ],
+                                );
+                              },
+                            ),
                           ),
-                    ),
-                    child: Obx(
-                      () => AnimatedSwitcher(
-                          duration: kThemeChangeDuration,
-                          switchInCurve: Curves.easeInOut,
-                          switchOutCurve: Curves.easeInOut,
-                          child: getStateButton(controller, baseService.solvingState())),
+                        ),
+                        SizedBox(height: 16),
+                        // todo: make button impossible to tap when invisible
+                        TextButtonTheme(
+                          data: TextButtonThemeData(
+                            style: Theme.of(context).textButtonTheme.style!.copyWith(
+                                  textStyle: MaterialStateProperty.all(
+                                      Theme.of(context).textTheme.button!.copyWith(fontSize: 18)),
+                                  padding: MaterialStateProperty.all(
+                                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
+                                ),
+                          ),
+                          child: Obx(
+                            () => AnimatedSwitcher(
+                                duration: kThemeChangeDuration,
+                                switchInCurve: Curves.easeInOut,
+                                switchOutCurve: Curves.easeInOut,
+                                child: getStateButton(controller, baseService.solvingState())),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                const Expanded(
+                  child: SizedBox.shrink(),
+                ),
+              ],
             ),
-          ),
-          const Expanded(
-            child: SizedBox.shrink(),
           ),
         ],
       ),
