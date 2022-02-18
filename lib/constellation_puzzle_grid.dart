@@ -251,13 +251,16 @@ class TilePainter extends CustomPainter {
     final box = context.findRenderObject() as RenderBox;
     final mqData = MediaQuery.of(context);
     final pos = box.localToGlobal(Offset.zero);
-    final tilePos = pos + Offset(i * tileSize.width, j * tileSize.height);
+    final tilePos = pos + Offset(i * tileSize.width, j * tileSize.height) + sizeToOffset(paddingSize / 2);
     if (image != null) {
       final imageSize = Size(image!.width.toDouble(), image!.height.toDouble());
       final fittedSizes = applyBoxFit(BoxFit.cover, imageSize, mqData.size * mqData.devicePixelRatio);
-      final boxFitOffset = ((imageSize - fittedSizes.source) as Offset) / 2;
-      final scale = fittedSizes.source.width / fittedSizes.destination.width;
-      final tileImageSize = (tileSize * mqData.devicePixelRatio * scale);
+      // 2 Offset(0.0, 92.5) Size(3840.0, 1980.0)
+      final gridSize = box.size * mqData.devicePixelRatio;
+      final scale = (constellation.skyBoxSize ?? Size(750, 750)).width / gridSize.width;
+      final boxFitOffset = constellation.skyBoxOffset - pos * mqData.devicePixelRatio * scale;//((imageSize - fittedSizes.source) as Offset) / 2;
+      // final scale = 2.0;//fittedSizes.source.width / fittedSizes.destination.width;
+      final tileImageSize = (size * mqData.devicePixelRatio * scale);
       final tileImageOffset = (boxFitOffset + (tilePos * mqData.devicePixelRatio * scale));
       canvas.drawImageRect(
         image!,

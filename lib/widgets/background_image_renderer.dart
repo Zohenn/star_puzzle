@@ -80,6 +80,7 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
           box.localToGlobal(Offset.zero, ancestor: containerKey.currentContext!.findRenderObject() as RenderBox);
       final gridSize = box.size * mqData.devicePixelRatio;
       final scale = boxSize.width / gridSize.width;
+      print('${scale} ${(boxOffset - pos * mqData.devicePixelRatio * scale)} ${(size * mqData.devicePixelRatio * scale)}');
       canvas.drawImageRect(
           image!,
           (boxOffset - pos * mqData.devicePixelRatio * scale) & (size * mqData.devicePixelRatio * scale),
