@@ -13,17 +13,24 @@ class _ConstellationNameController extends GetxController with GetTickerProvider
 
   final ConstellationMeta constellation;
 
-  AnimationController? nameAnimationController;
-  Animation? nameAnimation;
-  Animation? starLeaveAnimation;
-  Animation? starEntryLeaveTranslateAnimation;
-  Animation? starEntryLeaveScaleAnimation;
-  Animation? starRotateAnimation;
+  late AnimationController nameAnimationController;
+  late Animation nameAnimation;
+  late Animation starLeaveAnimation;
+  late Animation starEntryLeaveTranslateAnimation;
+  late Animation starEntryLeaveScaleAnimation;
+  late Animation starRotateAnimation;
 
-  void startAnimation() {
-    final starEntryAnimationDuration = Duration(milliseconds: 300);
+  @override
+  void onInit() {
+    super.onInit();
+
+    prepareAnimation();
+  }
+
+  void prepareAnimation() {
+    const starEntryAnimationDuration = Duration(milliseconds: 300);
     final nameAnimationDuration = Duration(milliseconds: constellation.constellation.name.length * 100);
-    final starLeaveAnimationDuration = Duration(milliseconds: 300);
+    const starLeaveAnimationDuration = Duration(milliseconds: 300);
     final fullNameAnimationDuration = starEntryAnimationDuration + nameAnimationDuration + starLeaveAnimationDuration;
     nameAnimationController = AnimationController(vsync: this, duration: fullNameAnimationDuration);
     starEntryLeaveTranslateAnimation = TweenSequence(
@@ -41,7 +48,7 @@ class _ConstellationNameController extends GetxController with GetTickerProvider
           weight: starLeaveAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
         ),
       ],
-    ).animate(nameAnimationController!);
+    ).animate(nameAnimationController);
     starEntryLeaveScaleAnimation = TweenSequence(
       [
         TweenSequenceItem(
@@ -57,12 +64,12 @@ class _ConstellationNameController extends GetxController with GetTickerProvider
           weight: starLeaveAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds * 100,
         ),
       ],
-    ).animate(nameAnimationController!);
+    ).animate(nameAnimationController);
     starRotateAnimation =
-        Tween(begin: 0.0, end: constellation.constellation.name.length * 0.3).animate(nameAnimationController!);
+        Tween(begin: 0.0, end: constellation.constellation.name.length * 0.3).animate(nameAnimationController);
     nameAnimation = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: nameAnimationController!,
+        parent: nameAnimationController,
         curve: Interval(
           starEntryAnimationDuration.inMilliseconds / fullNameAnimationDuration.inMilliseconds,
           (starEntryAnimationDuration.inMilliseconds + nameAnimationDuration.inMilliseconds) /
@@ -71,11 +78,17 @@ class _ConstellationNameController extends GetxController with GetTickerProvider
         ),
       ),
     );
-    nameAnimationController!.addStatusListener((status) {
+    nameAnimationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Get.find<BaseService>().solvingState.value = SolvingState.done;
       }
     });
+  }
+
+  @override
+  void onClose() {
+    nameAnimationController.dispose();
+    super.onClose();
   }
 }
 
@@ -83,9 +96,11 @@ class ConstellationName extends StatelessWidget {
   const ConstellationName({
     Key? key,
     required this.constellation,
+    required this.animate,
   }) : super(key: key);
 
   final ConstellationMeta constellation;
+  final bool animate;
 
   BaseService get baseService => Get.find<BaseService>();
 
@@ -94,98 +109,103 @@ class ConstellationName extends StatelessWidget {
     return GetBuilder<_ConstellationNameController>(
       init: _ConstellationNameController(constellation),
       global: false,
-      builder: (controller) => Obx(
-        () => baseService.solvingState() == SolvingState.animating
-            ? Stack(
-                children: [
-                  Text(
-                    constellation.constellation.name,
-                    style: GoogleFonts.josefinSlab(
-                      textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                            color: Colors.transparent,
-                          ),
+      builder: (controller) {
+        if(animate && !controller.nameAnimationController.isAnimating){
+          controller.nameAnimationController.forward();
+        }
+        return Obx(
+          () => baseService.solvingState() == SolvingState.animating
+              ? Stack(
+                  children: [
+                    Text(
+                      constellation.constellation.name,
+                      style: GoogleFonts.josefinSlab(
+                        textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                              color: Colors.transparent,
+                            ),
+                      ),
                     ),
-                  ),
-                  Stack(
-                    fit: StackFit.passthrough,
-                    clipBehavior: Clip.none,
-                    children: [
-                      AnimatedBuilder(
-                        animation: controller.nameAnimation!,
-                        builder: (context, child) => ClipRect(
-                          child: ShaderMask(
-                            blendMode: BlendMode.srcIn,
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [cornsilk, Colors.transparent],
-                              stops: [controller.nameAnimation!.value, 1],
-                            ).createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              widthFactor: controller.nameAnimation!.value,
-                              child: Text(
-                                constellation.constellation.name,
-                                style: GoogleFonts.josefinSlab(
-                                  textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                        color: cornsilk,
-                                      ),
-                                ),
+                    Stack(
+                      fit: StackFit.passthrough,
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedBuilder(
+                          animation: controller.nameAnimation,
+                          builder: (context, child) => ClipRect(
+                            child: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => LinearGradient(
+                                colors: [cornsilk, Colors.transparent],
+                                stops: [controller.nameAnimation.value, 1],
+                              ).createShader(
+                                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) => AnimatedBuilder(
-                              animation: controller.nameAnimationController!,
-                              builder: (context, child) => Transform.translate(
-                                offset: Offset(
-                                  constraints.maxWidth / 2 +
-                                      controller.starEntryLeaveTranslateAnimation!.value * constraints.maxWidth * 2,
-                                  0,
-                                ),
-                                child: ClipRect(
-                                  child: Transform.scale(
-                                    scale: controller.starEntryLeaveScaleAnimation!.value,
-                                    child: child,
-                                  ),
-                                ),
-                              ),
-                              child: AnimatedBuilder(
-                                animation: controller.starRotateAnimation!,
-                                builder: (context, child) => Transform.rotate(
-                                  angle: controller.starRotateAnimation!.value * 360 * pi / 180,
-                                  child: CustomPaint(
-                                    painter: StarPainter(),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: controller.nameAnimation.value,
+                                child: Text(
+                                  constellation.constellation.name,
+                                  style: GoogleFonts.josefinSlab(
+                                    textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                          color: cornsilk,
+                                        ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) => AnimatedBuilder(
+                                animation: controller.nameAnimationController,
+                                builder: (context, child) => Transform.translate(
+                                  offset: Offset(
+                                    constraints.maxWidth / 2 +
+                                        controller.starEntryLeaveTranslateAnimation.value * constraints.maxWidth * 2,
+                                    0,
+                                  ),
+                                  child: ClipRect(
+                                    child: Transform.scale(
+                                      scale: controller.starEntryLeaveScaleAnimation.value,
+                                      child: child,
+                                    ),
+                                  ),
+                                ),
+                                child: AnimatedBuilder(
+                                  animation: controller.starRotateAnimation,
+                                  builder: (context, child) => Transform.rotate(
+                                    angle: controller.starRotateAnimation.value * 360 * pi / 180,
+                                    child: CustomPaint(
+                                      painter: StarPainter(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : Text(
+                  constellation.solved() ? constellation.constellation.name : 'Unknown',
+                  style: GoogleFonts.josefinSlab(
+                    textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                          color: (baseService.solvingState() == SolvingState.solving)
+                              ? Colors.transparent
+                              : (constellation.solved() ? cornsilk : Colors.white60),
+                        ),
                   ),
-                ],
-              )
-            : Text(
-                constellation.solved() ? constellation.constellation.name : 'Unknown',
-                style: GoogleFonts.josefinSlab(
-                  textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                        color: (baseService.solvingState() == SolvingState.solving)
-                            ? Colors.transparent
-                            : (constellation.solved() ? cornsilk : Colors.white60),
-                      ),
                 ),
-              ),
-      ),
+        );
+      },
     );
   }
 }
