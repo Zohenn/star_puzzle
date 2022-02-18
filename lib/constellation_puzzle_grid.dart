@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
+import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
 
@@ -198,7 +199,7 @@ class NewPuzzleTile extends StatelessWidget {
         onTap: onTap,
         child: CustomPaint(
           painter: TilePainter(
-            Get.find<BaseService>().backgroundImage,
+            Get.find<ConstellationService>().constellations.firstWhere((element) => element.constellation == constellation).skyImage,
             tile.originalPosition.x.toInt(),
             tile.originalPosition.y.toInt(),
             gridSize,

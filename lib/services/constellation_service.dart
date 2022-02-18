@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
@@ -18,7 +19,12 @@ class ConstellationMeta {
   final bestTime = RxnInt();
   final solved = false.obs;
   ui.Image? image;
+  ui.Image? skyImage;
   Rxn<Uint8List> imageBytes = Rxn<Uint8List>();
+
+  Future loadImages() {
+    return Future.wait([loadImage(), loadSkyImage()]);
+  }
 
   Future loadImage() async {
     ui.PictureRecorder recorder = ui.PictureRecorder();
@@ -41,6 +47,15 @@ class ConstellationMeta {
     constellationAnimation.skipForward();
     await loadImage();
   }
+
+  Future loadSkyImage() async {
+    ByteData bd = await rootBundle.load('assets/${constellation.skyFileName}');
+
+    final Uint8List bytes = Uint8List.view(bd.buffer);
+    final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+    skyImage = (await codec.getNextFrame()).image;
+    codec.dispose();
+  }
 }
 
 class ConstellationService extends GetxService {
@@ -62,7 +77,7 @@ class ConstellationService extends GetxService {
     await Future.wait(_constellations.map((e) {
       final constellationMeta = ConstellationMeta(e);
       constellations.add(constellationMeta);
-      return constellationMeta.loadImage();
+      return constellationMeta.loadImages();
     }));
   }
 }

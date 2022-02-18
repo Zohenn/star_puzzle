@@ -245,7 +245,19 @@ class ConstellationPuzzle extends StatelessWidget {
         children: [
           Positioned.fill(
             child: BackgroundImageRenderer(
-                gridSize: gridSize, containerKey: controller.containerKey, gridKey: controller.gridKey),
+              constellation: constellation,
+              gridSize: gridSize,
+              containerKey: controller.containerKey,
+              gridKey: controller.gridKey,
+            ),
+          ),
+          Positioned.fill(
+            child: Obx(
+              () => AnimatedContainer(
+                color: baseService.solvingState() == SolvingState.solving ? Color(0x20ffffff) : Color(0x00ffffff),
+                duration: kThemeChangeDuration,
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 24 * 2 + 96),

@@ -1,7 +1,11 @@
+import 'dart:ui';
+
 import 'package:star_puzzle/constellation.dart';
 
 final leo = Constellation(
   name: 'Leo',
+  skyFileName: 'leo_sky.jpg',
+  skyBoxOffset: const Offset(1475, 515),
   stars: [
     // Star(pos: Position(0.078249990940094, 0.614187479019165)),
     // Star(pos: Position(0.3201666673024495, 0.5946875015894572)),

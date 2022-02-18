@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:star_puzzle/constellation_puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/widgets/auto_keep_alive.dart';
 import 'package:star_puzzle/widgets/background_image_renderer.dart';
 
 class _MainLayoutController extends GetxController {
@@ -12,7 +13,7 @@ class _MainLayoutController extends GetxController {
   void onInit() {
     super.onInit();
 
-    selectedConstellation.value = Get.find<ConstellationService>().constellations.first;
+    selectedConstellation.value = Get.find<ConstellationService>().constellations[1];
   }
 }
 
@@ -29,13 +30,13 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DefaultTabController(
-        length: constellations.length,
-        initialIndex: 0,
-        child: GetBuilder<_MainLayoutController>(
-          init: _MainLayoutController(),
-          global: false,
-          builder: (controller) => Stack(
+      body: GetBuilder<_MainLayoutController>(
+        init: _MainLayoutController(),
+        global: false,
+        builder: (controller) => DefaultTabController(
+          length: constellations.length,
+          initialIndex: constellations.indexOf(controller.selectedConstellation()!),
+          child: Stack(
             children: [
               Positioned.fill(
                 child: Image.asset(

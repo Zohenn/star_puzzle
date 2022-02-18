@@ -51,12 +51,18 @@ class AnimationLine extends Line {
 class Constellation {
   Constellation({
     required this.name,
+    required this.skyFileName,
+    required this.skyBoxOffset,
+    this.skyBoxSize,
     required this.stars,
     required this.lines,
     this.starSize,
   });
 
   final String name;
+  final String skyFileName;
+  final Offset skyBoxOffset;
+  final Size? skyBoxSize;
   final List<Star> stars;
   final List<Line> lines;
   final double? starSize;
