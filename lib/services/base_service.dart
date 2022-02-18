@@ -14,16 +14,22 @@ enum SolvingState {
 }
 
 class BaseService extends GetxService {
-  late Future bootstrapFuture;
-  final containerKey = GlobalKey();
+  late Future initFuture;
   ui.Image? backgroundImage;
   final solvingState = SolvingState.none.obs;
+
+  final size = 3;
+  final gridSize = const Size.square(300);
+  Size get tileSize => gridSize / size.toDouble();
+
+  final constellationIconSize = const Size.square(96);
+  final constellationIconPadding = const EdgeInsets.symmetric(vertical: 24.0);
 
   @override
   void onInit() {
     super.onInit();
 
-    bootstrapFuture = init();
+    initFuture = init();
   }
 
   Future init() async {
@@ -35,6 +41,6 @@ class BaseService extends GetxService {
     // backgroundImage = (await codec.getNextFrame()).image;
     // codec.dispose();
 
-    await Get.put(ConstellationService(containerKey)).initFuture;
+    await Get.put(ConstellationService()).initFuture;
   }
 }

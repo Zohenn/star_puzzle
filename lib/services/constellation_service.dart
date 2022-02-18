@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/constellation.dart';
+import 'package:star_puzzle/constellations/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/constellations/sagittarius.dart';
 import 'package:star_puzzle/painters.dart';
@@ -29,10 +29,7 @@ class ConstellationMeta {
   Future loadImage() async {
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder);
-    // todo: gridSize shouldn't be declared here
-    final gridSize = Size(96, 96);
-    final scale = MediaQuery.of(Get.context!).devicePixelRatio;
-    final size = gridSize * scale;
+    final size = Get.find<BaseService>().constellationIconSize * MediaQuery.of(Get.context!).devicePixelRatio;
     final foregroundPainter = ConstellationAnimationPainter(Get.context!, constellationAnimation, 0.3, useCircles: true);
     // backgroundPainter.paint(canvas, size);
     canvas.drawRect(Offset.zero & size, Paint()..color = Get.theme.backgroundColor);
@@ -59,12 +56,11 @@ class ConstellationMeta {
 }
 
 class ConstellationService extends GetxService {
-  ConstellationService(this.containerKey);
+  ConstellationService();
 
   final List<Constellation> _constellations = [leo, sagittarius];
   final List<ConstellationMeta> constellations = [];
-  final GlobalKey containerKey;
-  Future? initFuture;
+  late Future initFuture;
 
   @override
   void onInit() {

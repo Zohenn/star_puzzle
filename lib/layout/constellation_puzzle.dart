@@ -1,26 +1,22 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:animated_size_and_fade/animated_size_and_fade.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:star_puzzle/constellation_name.dart';
-import 'package:star_puzzle/constellation_puzzle_grid.dart';
+import 'package:star_puzzle/layout/constellation_name.dart';
+import 'package:star_puzzle/layout/constellation_puzzle_grid.dart';
 import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/star_info.dart';
+import 'package:star_puzzle/size_mixin.dart';
+import 'package:star_puzzle/layout/star_info.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
 import 'package:star_puzzle/widgets/background_image_renderer.dart';
-import 'package:star_puzzle/widgets/child_position_notifier.dart';
-import 'package:star_puzzle/widgets/theme_provider.dart';
 
-import 'package:star_puzzle/constellation.dart';
+import 'package:star_puzzle/constellations/constellation.dart';
 import 'package:touchable/touchable.dart';
 
 class _ConstellationPuzzleController extends GetxController with GetTickerProviderStateMixin {
@@ -65,7 +61,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
 
   void startTimer() {
     stopwatch = Stopwatch()..start();
-    elapsedSecondsTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    elapsedSecondsTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       elapsedSeconds.value = stopwatch!.elapsedMilliseconds ~/ 1000;
     });
   }
@@ -116,11 +112,11 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
 
   void _onStarTap(Star star) {
     selectedStar.value = selectedStar() == star ? null : star;
-    if(selectedStar.value != null){
+    if (selectedStar.value != null) {
       selectedStarAnimationController ??= AnimationController(vsync: this, duration: const Duration(seconds: 1));
       selectedStarAnimationController!.forward(from: 0);
       selectedStarAnimationController!.addStatusListener((status) {
-        if(status == AnimationStatus.completed){
+        if (status == AnimationStatus.completed) {
           selectedStarAnimationController!.forward(from: 0);
         }
       });
@@ -144,17 +140,16 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   }
 }
 
-class ConstellationPuzzle extends StatelessWidget {
-  ConstellationPuzzle({
+class ConstellationPuzzle extends StatelessWidget with SizeMixin {
+  const ConstellationPuzzle({
     Key? key,
     required this.constellation,
-    required this.gridSize,
   }) : super(key: key);
 
   final ConstellationMeta constellation;
-  final Size gridSize;
 
-  final baseService = Get.find<BaseService>();
+  double get constellationIconBarHeight =>
+      baseService.constellationIconPadding.along(Axis.vertical) + baseService.constellationIconSize.height;
 
   Widget getStateButton(_ConstellationPuzzleController controller, SolvingState solvingState) {
     switch (solvingState) {
@@ -207,7 +202,6 @@ class ConstellationPuzzle extends StatelessWidget {
           Positioned.fill(
             child: BackgroundImageRenderer(
               constellation: constellation,
-              gridSize: gridSize,
               containerKey: controller.containerKey,
               gridKey: controller.gridKey,
             ),
@@ -215,13 +209,17 @@ class ConstellationPuzzle extends StatelessWidget {
           Positioned.fill(
             child: Obx(
               () => AnimatedContainer(
-                color: baseService.solvingState() == SolvingState.solving ? Color(0x20ffffff) : Color(0x00ffffff),
+                color: baseService.solvingState() == SolvingState.solving
+                    ? Colors.white.withOpacity(0.12)
+                    : Colors.transparent,
                 duration: kThemeChangeDuration,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 24 * 2 + 96),
+            padding: EdgeInsets.only(
+              bottom: constellationIconBarHeight,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -249,7 +247,7 @@ class ConstellationPuzzle extends StatelessWidget {
                                           style: GoogleFonts.poppins(),
                                         ),
                                       ),
-                                      SizedBox(height: 16),
+                                      const SizedBox(height: 16),
                                       Text('BEST TIME', style: Theme.of(context).textTheme.caption),
                                       Obx(
                                         () => Text(
@@ -259,7 +257,7 @@ class ConstellationPuzzle extends StatelessWidget {
                                           style: GoogleFonts.poppins(),
                                         ),
                                       ),
-                                      SizedBox(height: 16),
+                                      const SizedBox(height: 16),
                                     ],
                                   ),
                                 ),
@@ -270,17 +268,17 @@ class ConstellationPuzzle extends StatelessWidget {
                                   duration: kThemeChangeDuration,
                                   curve: Curves.easeInOut,
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(minWidth: 94),
+                                    constraints: const BoxConstraints(minWidth: 94),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('MOVES', style: Theme.of(context).textTheme.caption),
                                         Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
-                                        SizedBox(height: 16),
+                                        const SizedBox(height: 16),
                                         Text('TIME', style: Theme.of(context).textTheme.caption),
                                         Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
-                                        SizedBox(height: 16),
+                                        const SizedBox(height: 16),
                                       ],
                                     ),
                                   ),
@@ -313,7 +311,7 @@ class ConstellationPuzzle extends StatelessWidget {
                             animate: controller.showName(),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         SizedBox.fromSize(
                           key: controller.gridKey,
                           size: gridSize,
@@ -327,7 +325,6 @@ class ConstellationPuzzle extends StatelessWidget {
                                         () => ConstellationPuzzleGrid(
                                           puzzle: controller.puzzle(),
                                           constellation: constellation.constellation,
-                                          gridSize: gridSize,
                                           onShuffleEnd: controller.startTimer,
                                           onMove: controller.onMove,
                                           onComplete: controller.onComplete,
@@ -349,7 +346,8 @@ class ConstellationPuzzle extends StatelessWidget {
                                               starSize: constellation.constellation.starSize,
                                               onStarTap: controller.onStarTap,
                                               selectedStar: controller.selectedStar(),
-                                              selectedStarAnimationController: controller.selectedStarAnimationController,
+                                              selectedStarAnimationController:
+                                                  controller.selectedStarAnimationController,
                                             ),
                                           ),
                                         );
@@ -368,7 +366,7 @@ class ConstellationPuzzle extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         // todo: make button impossible to tap when invisible
                         TextButtonTheme(
                           data: TextButtonThemeData(

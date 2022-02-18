@@ -1,41 +1,9 @@
 import 'dart:math';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:get/get.dart';
-import 'package:star_puzzle/constellation.dart';
+import 'package:star_puzzle/constellations/constellation.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:touchable/touchable.dart';
-
-class ConstellationBackgroundPainter extends CustomPainter {
-  ConstellationBackgroundPainter(this.image, this.containerKey);
-
-  final ui.Image? image;
-  final GlobalKey containerKey;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image != null) {
-      final context = containerKey.currentContext!;
-      final mq = MediaQuery.of(Get.context!);
-      final screenSize = (mq.size) * mq.devicePixelRatio;
-      final box = context.findRenderObject() as RenderBox;
-      final pos = box.localToGlobal(Offset.zero);
-      final scale = screenSize.height / image!.height;
-      final srcSize = box.size * mq.devicePixelRatio * 1 / scale;
-      final imageOffset = Offset(image!.width / 2 - srcSize.width / 2, pos.dy * mq.devicePixelRatio * 1 / scale);
-      canvas.save();
-      canvas.drawImageRect(image!, imageOffset & srcSize, Offset.zero & size, Paint());
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
 
 class ConstellationAnimationPainter extends CustomPainter {
   ConstellationAnimationPainter(
@@ -69,7 +37,7 @@ class ConstellationAnimationPainter extends CustomPainter {
     final canvas = TouchyCanvas(context, _canvas);
 
     final linePaint = Paint()
-      ..color = Color(0x30ffffff)
+      ..color = Colors.white.withOpacity(0.2)
       ..strokeWidth = (starPathSize / 5).width;
     for (var line in constellation.lines) {
       var firstStar = constellation.stars[line.start];
@@ -127,12 +95,15 @@ class ConstellationAnimationPainter extends CustomPainter {
             );
           }
         }
-        canvas.drawPath(starPath, starPaint,
-            onTapDown: onStarTap != null
-                ? (details) {
-                    onStarTap!(star);
-                  }
-                : null);
+        canvas.drawPath(
+          starPath,
+          starPaint,
+          onTapDown: onStarTap != null
+              ? (details) {
+                  onStarTap!(star);
+                }
+              : null,
+        );
         if (needsRotation) {
           _canvas.restore();
         }

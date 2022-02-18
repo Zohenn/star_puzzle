@@ -2,14 +2,15 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/constellation.dart';
+import 'package:star_puzzle/constellations/constellation.dart';
 import 'package:star_puzzle/puzzle.dart';
-import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/size_mixin.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
 
-final _shuffleAnimationDuration = Duration(milliseconds: 500);
+const _shuffleAnimationDuration = Duration(milliseconds: 500);
+const _moveAnimationDuration = Duration(milliseconds: 150);
 
 class _ConstellationPuzzleGridController extends GetxController with GetTickerProviderStateMixin {
   _ConstellationPuzzleGridController(this.puzzle, this.onShuffleEnd, this.onComplete) {
@@ -26,7 +27,7 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
           ),
         ),
       );
-      final animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 150));
+      final animationController = AnimationController(vsync: this, duration: _moveAnimationDuration);
       animationController.addStatusListener(((status) {
         if(status == AnimationStatus.completed && puzzle.complete){
           complete.value = true;
@@ -64,7 +65,6 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
 
   @override
   void onClose() {
-    print('disposed');
     shuffleAnimationController.dispose();
     animationControllers.forEach((key, value) {
       value.dispose();
@@ -73,12 +73,11 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
   }
 }
 
-class ConstellationPuzzleGrid extends StatelessWidget {
+class ConstellationPuzzleGrid extends StatelessWidget with SizeMixin {
   const ConstellationPuzzleGrid({
     Key? key,
     required this.puzzle,
     required this.constellation,
-    required this.gridSize,
     required this.onShuffleEnd,
     required this.onMove,
     required this.onComplete,
@@ -86,27 +85,18 @@ class ConstellationPuzzleGrid extends StatelessWidget {
 
   final Puzzle? puzzle;
   final Constellation constellation;
-  final Size gridSize;
   final VoidCallback onShuffleEnd;
   final VoidCallback onMove;
   final VoidCallback onComplete;
 
-  Size get tileSize => gridSize / 3;
-
   @override
   Widget build(BuildContext context) {
     if (puzzle == null) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     return GetBuilder<_ConstellationPuzzleGridController>(
       init: _ConstellationPuzzleGridController(puzzle!, onShuffleEnd, onComplete),
       global: false,
-      // didUpdateWidget: (oldWidget, state) {
-      //   if ((oldWidget as GetBuilder<_ConstellationPuzzleGridController>).init!.puzzle != puzzle) {
-      //     state.controller = state.widget.init;
-      //     state.controller?.onStart();
-      //   }
-      // },
       builder: (controller) => Obx(
         () => Stack(
           key: controller.containerKey,
@@ -127,10 +117,8 @@ class ConstellationPuzzleGrid extends StatelessWidget {
                     child: child!,
                   );
                 },
-                child: NewPuzzleTile(
+                child: PuzzleTile(
                   tile: tile,
-                  gridSize: gridSize,
-                  tileSize: tileSize,
                   onTap: () {
                     if (controller.complete() || !puzzle!.canMoveTile(tile) ||
                         !controller.shuffleAnimationFinished() ||
@@ -159,12 +147,10 @@ class ConstellationPuzzleGrid extends StatelessWidget {
   }
 }
 
-class NewPuzzleTile extends StatelessWidget {
-  const NewPuzzleTile({
+class PuzzleTile extends StatelessWidget with SizeMixin {
+  const PuzzleTile({
     Key? key,
     required this.tile,
-    required this.gridSize,
-    required this.tileSize,
     required this.onTap,
     required this.complete,
     required this.constellation,
@@ -172,8 +158,6 @@ class NewPuzzleTile extends StatelessWidget {
   }) : super(key: key);
 
   final Tile tile;
-  final Size gridSize;
-  final Size tileSize;
   final VoidCallback onTap;
   final bool complete;
   final Constellation constellation;
@@ -202,7 +186,6 @@ class NewPuzzleTile extends StatelessWidget {
             Get.find<ConstellationService>().constellations.firstWhere((element) => element.constellation == constellation).skyImage,
             tile.originalPosition.x.toInt(),
             tile.originalPosition.y.toInt(),
-            gridSize,
             constellation,
             containerKey,
           ),
@@ -223,12 +206,11 @@ class NewPuzzleTile extends StatelessWidget {
   }
 }
 
-class TilePainter extends CustomPainter {
+class TilePainter extends CustomPainter with SizeMixin {
   TilePainter(
     this.image,
     this.i,
     this.j,
-    this.gridSize,
     this.constellation,
     this.containerKey,
   );
@@ -236,13 +218,10 @@ class TilePainter extends CustomPainter {
   ui.Image? image;
   int i;
   int j;
-  Size gridSize;
   Constellation constellation;
   GlobalKey containerKey;
 
   Size get starPathSize => constellation.starSize != null ? Size.square(constellation.starSize!) : const Size.square(12);
-
-  Size get tileSize => gridSize / 3;
 
   @override
   void paint(Canvas canvas, Size size) {

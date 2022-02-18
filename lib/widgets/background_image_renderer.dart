@@ -16,13 +16,11 @@ class BackgroundImageRenderer extends StatelessWidget {
   const BackgroundImageRenderer({
     Key? key,
     required this.constellation,
-    required this.gridSize,
     required this.containerKey,
     required this.gridKey,
   }) : super(key: key);
 
   final ConstellationMeta constellation;
-  final Size gridSize;
   final GlobalKey containerKey;
   final GlobalKey gridKey;
 

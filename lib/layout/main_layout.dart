@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/constellation_puzzle.dart';
+import 'package:star_puzzle/layout/constellation_puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/widgets/auto_keep_alive.dart';
-import 'package:star_puzzle/widgets/background_image_renderer.dart';
+import 'package:star_puzzle/size_mixin.dart';
 
 class _MainLayoutController extends GetxController {
   final selectedConstellation = Rxn<ConstellationMeta>();
@@ -23,15 +22,15 @@ class _MainLayoutController extends GetxController {
   }
 }
 
-class MainLayout extends StatelessWidget {
-  MainLayout({Key? key}) : super(key: key);
+class MainLayout extends StatelessWidget with SizeMixin {
+  const MainLayout({Key? key}) : super(key: key);
 
-  final gridSize = Size(300, 300);
-  final size = 3;
+  Size get constellationIconSize => baseService.constellationIconSize;
+  EdgeInsets get constellationIconPadding => baseService.constellationIconPadding;
 
   List<ConstellationMeta> get constellations => Get.find<ConstellationService>().constellations;
 
-  SolvingState get solvingState => Get.find<BaseService>().solvingState();
+  SolvingState get solvingState => baseService.solvingState();
 
   @override
   Widget build(BuildContext context) {
@@ -44,26 +43,12 @@ class MainLayout extends StatelessWidget {
           initialIndex: constellations.indexOf(controller.selectedConstellation()!),
           child: Stack(
             children: [
-              Positioned.fill(
-                  child: ColoredBox(
-                color: Theme.of(context).backgroundColor,
-              )),
-              // BackgroundImageRenderer(gridSize: gridSize),
-              Positioned.fill(
-                child: Obx(
-                  () => AnimatedContainer(
-                    color: solvingState == SolvingState.solving ? Color(0x20ffffff) : Color(0x00ffffff),
-                    duration: kThemeChangeDuration,
-                  ),
-                ),
-              ),
               TabBarView(
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   for (var constellation in constellations)
                     ConstellationPuzzle(
                       constellation: constellation,
-                      gridSize: gridSize,
                     ),
                 ],
               ),
@@ -79,7 +64,7 @@ class MainLayout extends StatelessWidget {
                     child: Center(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        padding: constellationIconPadding,
                         child: Row(
                           children: [
                             for (var constellation in constellations) ...[
@@ -98,8 +83,8 @@ class MainLayout extends StatelessWidget {
                                   elevation: controller.selectedConstellation() == constellation ? 4 : 0,
                                   child: Stack(
                                     children: [
-                                      SizedBox.square(
-                                        dimension: 96,
+                                      SizedBox.fromSize(
+                                        size: constellationIconSize,
                                         child: Obx(
                                           () => Image.memory(
                                             constellation.imageBytes()!,
