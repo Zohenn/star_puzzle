@@ -66,6 +66,7 @@ class Constellation {
     required this.skyFileName,
     required this.skyBoxOffset,
     Size? skyBoxSize,
+    this.backgroundColor,
     required this.stars,
     required this.lines,
     this.starSize,
@@ -75,6 +76,7 @@ class Constellation {
   final String skyFileName;
   final Offset skyBoxOffset;
   final Size? _skyBoxSize;
+  final Color? backgroundColor;
   final List<Star> stars;
   final List<Line> lines;
   final double? starSize;

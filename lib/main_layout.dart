@@ -43,11 +43,7 @@ class MainLayout extends StatelessWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: Image.asset(
-                  'assets/night_sky.jpg',
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.high,
-                ),
+                child: ColoredBox(color: Theme.of(context).backgroundColor,)
               ),
               // BackgroundImageRenderer(gridSize: gridSize),
               Positioned.fill(

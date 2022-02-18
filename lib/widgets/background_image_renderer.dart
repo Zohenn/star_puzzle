@@ -37,7 +37,7 @@ class BackgroundImageRenderer extends StatelessWidget {
         }
         return ColoredBox(
           key: controller.containerKey,
-          color: Colors.transparent,
+          color: constellation.constellation.backgroundColor ?? Theme.of(context).backgroundColor,
           child: CustomPaint(
             painter: ConstellationSkyBackgroundPainter(
               constellation.skyImage,
