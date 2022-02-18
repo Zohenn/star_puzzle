@@ -13,6 +13,7 @@ import 'package:star_puzzle/painters.dart';
 import 'package:star_puzzle/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/star_info.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
 import 'package:star_puzzle/widgets/background_image_renderer.dart';
@@ -36,6 +37,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   final previousTime = 0.obs;
   final showName = false.obs;
   final selectedStar = Rxn<Star>();
+  AnimationController? selectedStarAnimationController;
 
   final containerKey = GlobalKey();
   final gridKey = GlobalKey();
@@ -114,6 +116,15 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
 
   void _onStarTap(Star star) {
     selectedStar.value = selectedStar() == star ? null : star;
+    if(selectedStar.value != null){
+      selectedStarAnimationController ??= AnimationController(vsync: this, duration: const Duration(seconds: 1));
+      selectedStarAnimationController!.forward(from: 0);
+      selectedStarAnimationController!.addStatusListener((status) {
+        if(status == AnimationStatus.completed){
+          selectedStarAnimationController!.forward(from: 0);
+        }
+      });
+    }
   }
 
   void Function(Star star)? get onStarTap {
@@ -292,7 +303,7 @@ class ConstellationPuzzle extends StatelessWidget {
                 ),
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 36.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 48.0),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -338,6 +349,7 @@ class ConstellationPuzzle extends StatelessWidget {
                                               starSize: constellation.constellation.starSize,
                                               onStarTap: controller.onStarTap,
                                               selectedStar: controller.selectedStar(),
+                                              selectedStarAnimationController: controller.selectedStarAnimationController,
                                             ),
                                           ),
                                         );
@@ -379,8 +391,26 @@ class ConstellationPuzzle extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Expanded(
-                  child: SizedBox.shrink(),
+                Expanded(
+                  child: Obx(
+                    () => AnimatedSwitcher(
+                      duration: kThemeChangeDuration,
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      child: constellation.solved() && baseService.solvingState() == SolvingState.none
+                          ? Obx(() => StarInfo(star: controller.selectedStar()))
+                          : const SizedBox.shrink(),
+                      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                        return Stack(
+                          alignment: Alignment.topLeft,
+                          children: <Widget>[
+                            ...previousChildren,
+                            if (currentChild != null) currentChild,
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellation.dart';
@@ -45,7 +46,8 @@ class ConstellationAnimationPainter extends CustomPainter {
     this.starSize,
     this.onStarTap,
     this.selectedStar,
-  });
+    this.selectedStarAnimationController,
+  }) : super(repaint: selectedStarAnimationController);
 
   final BuildContext context;
   final ConstellationAnimation constellation;
@@ -54,6 +56,7 @@ class ConstellationAnimationPainter extends CustomPainter {
   final double? starSize;
   final void Function(Star star)? onStarTap;
   final Star? selectedStar;
+  final AnimationController? selectedStarAnimationController;
 
   static const _baseStarPathSize = Size(12, 12);
 
@@ -83,30 +86,54 @@ class ConstellationAnimationPainter extends CustomPainter {
     }
 
     // final starPaint = Paint()..color = Color(0xffFFF7D5);
-    final starPaint = Paint()..color = Color(0xffffffff);
+    final starPaint = Paint()..color = Colors.white;
     for (var star in constellation.stars) {
       final isSelected = star == selectedStar;
       if (useCircles) {
         canvas.drawCircle(star.pos.toOffset(size), starPathSize.width * preScale, starPaint);
       } else {
         final _starPathSize = starPathSize * (isSelected ? 1.25 : 1);
-        final starPath = getStarPath(_starPathSize)
-            .shift(star.pos.toOffset(size) - sizeToOffset(_starPathSize) / 2);
-        if (star.fill != 0 && star.fill != 1) {
+        final starPath = getStarPath(_starPathSize).shift(star.pos.toOffset(size) - sizeToOffset(_starPathSize) / 2);
+        final needsRotation = star.fill != 0 && star.fill != 1 || selectedStarAnimationController != null;
+        if (needsRotation) {
           _canvas.save();
           _canvas.translate(star.pos.toOffset(size).dx, star.pos.toOffset(size).dy);
-          _canvas.rotate(star.fill * pi);
-          _canvas.scale(sin(star.fill * pi) * 0.5 + 1);
+          _canvas.rotate((isSelected ? selectedStarAnimationController!.value : star.fill) * pi);
+          if (selectedStarAnimationController == null) {
+            _canvas.scale(sin(star.fill * pi) * 0.5 + 1);
+          }
           _canvas.translate(-star.pos.toOffset(size).dx, -star.pos.toOffset(size).dy);
         }
-        canvas.drawShadow(starPath, Color(0xffffffff), star.fill * 2, true);
+        canvas.drawShadow(starPath, Colors.white, star.fill * 2, true);
+        if (onStarTap != null) {
+          final tapRegionPaint = Paint()..color = Colors.transparent;
+          if (!isSelected) {
+            // draw transparent square, so it's easier to hit the star
+            canvas.drawRect(
+              (star.pos.toOffset(size) - sizeToOffset(_starPathSize) / 2) & _starPathSize,
+              tapRegionPaint,
+              onTapDown: (details) {
+                onStarTap!(star);
+              },
+            );
+          } else {
+            canvas.drawCircle(
+              star.pos.toOffset(size),
+              starPathSize.width,
+              tapRegionPaint,
+              onTapDown: (details) {
+                onStarTap!(star);
+              },
+            );
+          }
+        }
         canvas.drawPath(starPath, starPaint,
             onTapDown: onStarTap != null
                 ? (details) {
                     onStarTap!(star);
                   }
                 : null);
-        if (star.fill != 0 && star.fill != 1) {
+        if (needsRotation) {
           _canvas.restore();
         }
 
@@ -114,12 +141,8 @@ class ConstellationAnimationPainter extends CustomPainter {
           final selectedStarCirclePaint = Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.0
-            ..color = Color(0xffffffff).withOpacity(0.4);
-          canvas.drawCircle(
-            star.pos.toOffset(size),
-            starPathSize.width,
-            selectedStarCirclePaint,
-          );
+            ..color = Colors.white.withOpacity(0.4);
+          canvas.drawCircle(star.pos.toOffset(size), starPathSize.width, selectedStarCirclePaint);
         }
       }
     }

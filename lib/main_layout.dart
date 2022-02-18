@@ -14,6 +14,10 @@ class _MainLayoutController extends GetxController {
     super.onInit();
 
     selectedConstellation.value = Get.find<ConstellationService>().constellations[0];
+    selectedConstellation.value!.solved.value = true;
+    selectedConstellation.value!.bestMoves.value = 1;
+    selectedConstellation.value!.bestTime.value = 0;
+    selectedConstellation.value!.constellationAnimation.skipForward();
   }
 }
 

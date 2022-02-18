@@ -31,7 +31,13 @@ class Star {
 }
 
 class AnimationStar extends Star {
-  AnimationStar({required pos}) : super(pos: pos);
+  AnimationStar({required pos, String? name, double? magnitude, double? distance})
+      : super(
+          pos: pos,
+          name: name,
+          magnitude: magnitude,
+          distance: distance,
+        );
 
   double fill = 0;
   bool shouldFill = false;
@@ -63,7 +69,7 @@ class Constellation {
     required this.stars,
     required this.lines,
     this.starSize,
-  }): _skyBoxSize = skyBoxSize;
+  }) : _skyBoxSize = skyBoxSize;
 
   final String name;
   final String skyFileName;
@@ -84,7 +90,14 @@ class ConstellationAnimation {
 
   static ConstellationAnimation from(Constellation constellation) {
     return ConstellationAnimation(
-      stars: constellation.stars.map((e) => AnimationStar(pos: e.pos)).toList(),
+      stars: constellation.stars
+          .map((e) => AnimationStar(
+                pos: e.pos,
+                name: e.name,
+                magnitude: e.magnitude,
+                distance: e.distance,
+              ))
+          .toList(),
       lines: constellation.lines.map((e) => AnimationLine(e.start, e.end)).toList(),
     );
   }
@@ -110,8 +123,9 @@ class ConstellationAnimation {
       if (firstStar.fill == 1 && !line.shouldFill) {
         line.shouldFill = true;
       }
-      if(secondStar.fill == 1){
-        var oppositeLine = lines.firstWhere((element) => element.start == line.end && element.end == line.start, orElse: () {
+      if (secondStar.fill == 1) {
+        var oppositeLine =
+            lines.firstWhere((element) => element.start == line.end && element.end == line.start, orElse: () {
           var l = AnimationLine(line.end, line.start);
           lines.add(l);
           return l;
@@ -120,9 +134,9 @@ class ConstellationAnimation {
       }
       if (line.shouldFill) {
         line.fill = min(line.fill + animationSpeed * (1 - lineLength(line)), 1);
-        if(line.fill == 1){
+        if (line.fill == 1) {
           var secondStar = stars[line.end];
-          if(!secondStar.shouldFill){
+          if (!secondStar.shouldFill) {
             secondStar.shouldFill = true;
             secondStar.fill = 0.35;
           }
@@ -134,11 +148,13 @@ class ConstellationAnimation {
   }
 
   void skipForward() {
-    for(var star in stars){
+    for (var star in stars) {
+      star.shouldFill = true;
       star.fill = 1;
     }
 
-    for(var line in lines){
+    for (var line in lines) {
+      line.shouldFill = true;
       line.fill = 1;
     }
   }
