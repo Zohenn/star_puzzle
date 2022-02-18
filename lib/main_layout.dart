@@ -13,7 +13,7 @@ class _MainLayoutController extends GetxController {
   void onInit() {
     super.onInit();
 
-    selectedConstellation.value = Get.find<ConstellationService>().constellations[1];
+    selectedConstellation.value = Get.find<ConstellationService>().constellations[0];
   }
 }
 

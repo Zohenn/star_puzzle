@@ -28,12 +28,12 @@ class BaseService extends GetxService {
 
   Future init() async {
     await precacheImage(AssetImage('assets/night_sky.jpg'), Get.context!);
-    ByteData bd = await rootBundle.load('assets/night_sky.jpg');
-
-    final Uint8List bytes = Uint8List.view(bd.buffer);
-    final ui.Codec codec = await ui.instantiateImageCodec(bytes);
-    backgroundImage = (await codec.getNextFrame()).image;
-    codec.dispose();
+    // ByteData bd = await rootBundle.load('assets/night_sky.jpg');
+    //
+    // final Uint8List bytes = Uint8List.view(bd.buffer);
+    // final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+    // backgroundImage = (await codec.getNextFrame()).image;
+    // codec.dispose();
 
     await Get.put(ConstellationService(containerKey)).initFuture;
   }

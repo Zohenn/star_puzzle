@@ -240,7 +240,7 @@ class TilePainter extends CustomPainter {
   Constellation constellation;
   GlobalKey containerKey;
 
-  Size get starPathSize => constellation.starSize != null ? Size.square(constellation.starSize!) : Size.square(12);
+  Size get starPathSize => constellation.starSize != null ? Size.square(constellation.starSize!) : const Size.square(12);
 
   Size get tileSize => gridSize / 3;
 
@@ -253,13 +253,9 @@ class TilePainter extends CustomPainter {
     final pos = box.localToGlobal(Offset.zero);
     final tilePos = pos + Offset(i * tileSize.width, j * tileSize.height) + sizeToOffset(paddingSize / 2);
     if (image != null) {
-      final imageSize = Size(image!.width.toDouble(), image!.height.toDouble());
-      final fittedSizes = applyBoxFit(BoxFit.cover, imageSize, mqData.size * mqData.devicePixelRatio);
-      // 2 Offset(0.0, 92.5) Size(3840.0, 1980.0)
       final gridSize = box.size * mqData.devicePixelRatio;
-      final scale = (constellation.skyBoxSize ?? Size(750, 750)).width / gridSize.width;
+      final scale = constellation.skyBoxSize.width / gridSize.width;
       final boxFitOffset = constellation.skyBoxOffset - pos * mqData.devicePixelRatio * scale;//((imageSize - fittedSizes.source) as Offset) / 2;
-      // final scale = 2.0;//fittedSizes.source.width / fittedSizes.destination.width;
       final tileImageSize = (size * mqData.devicePixelRatio * scale);
       final tileImageOffset = (boxFitOffset + (tilePos * mqData.devicePixelRatio * scale));
       canvas.drawImageRect(

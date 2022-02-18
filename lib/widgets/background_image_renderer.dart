@@ -1,14 +1,8 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/constellation.dart';
-import 'package:star_puzzle/constellation_puzzle.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/utils.dart';
-import 'package:star_puzzle/widgets/child_position_notifier.dart';
 
 class _BackgroundImageRendererController extends GetxController {
   _BackgroundImageRendererController(this.constellation);
@@ -48,7 +42,7 @@ class BackgroundImageRenderer extends StatelessWidget {
             painter: ConstellationSkyBackgroundPainter(
               constellation.skyImage,
               constellation.constellation.skyBoxOffset,
-              constellation.constellation.skyBoxSize ?? Size(750, 750),
+              constellation.constellation.skyBoxSize,
               MediaQuery.of(context),
               containerKey,
               gridKey,
@@ -80,7 +74,6 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
           box.localToGlobal(Offset.zero, ancestor: containerKey.currentContext!.findRenderObject() as RenderBox);
       final gridSize = box.size * mqData.devicePixelRatio;
       final scale = boxSize.width / gridSize.width;
-      print('${scale} ${(boxOffset - pos * mqData.devicePixelRatio * scale)} ${(size * mqData.devicePixelRatio * scale)}');
       canvas.drawImageRect(
           image!,
           (boxOffset - pos * mqData.devicePixelRatio * scale) & (size * mqData.devicePixelRatio * scale),

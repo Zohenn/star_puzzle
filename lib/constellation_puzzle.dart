@@ -19,6 +19,7 @@ import 'package:star_puzzle/widgets/child_position_notifier.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 
 import 'package:star_puzzle/constellation.dart';
+import 'package:touchable/touchable.dart';
 
 class _ConstellationPuzzleController extends GetxController with GetTickerProviderStateMixin {
   _ConstellationPuzzleController(this.constellation);
@@ -32,7 +33,6 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   Timer? elapsedSecondsTimer;
   Ticker? ticker;
   final previousTime = 0.obs;
-  final isAnimatingConstellation = false.obs;
   AnimationController? nameAnimationController;
   Animation? nameAnimation;
   Animation? starLeaveAnimation;
@@ -40,6 +40,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   Animation? starEntryLeaveScaleAnimation;
   Animation? starRotateAnimation;
   final showName = false.obs;
+  final selectedStar = Rxn<Star>();
 
   final containerKey = GlobalKey();
   final gridKey = GlobalKey();
@@ -146,12 +147,10 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       }
     });
     ticker!.start();
-    isAnimatingConstellation.value = true;
     Get.find<BaseService>().solvingState.value = SolvingState.animating;
   }
 
   void onAnimationEnd() {
-    isAnimatingConstellation.value = false;
     Get.find<BaseService>().solvingState.value = SolvingState.done;
   }
 
@@ -171,6 +170,18 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
     }
     isSolving.value = false;
     startAnimation();
+  }
+
+  void _onStarTap(Star star) {
+    selectedStar.value = selectedStar() == star ? null : star;
+  }
+
+  void Function(Star star)? get onStarTap {
+    if (!constellation.solved() || Get.find<BaseService>().solvingState() != SolvingState.none) {
+      return null;
+    }
+
+    return _onStarTap;
   }
 
   @override
@@ -347,7 +358,7 @@ class ConstellationPuzzle extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Obx(
-                          () => controller.isAnimatingConstellation()
+                          () => baseService.solvingState() == SolvingState.animating
                               ? Stack(
                                   children: [
                                     Text(
@@ -429,20 +440,14 @@ class ConstellationPuzzle extends StatelessWidget {
                                     ),
                                   ],
                                 )
-                              : Obx(
-                                  () => AnimatedDefaultTextStyle(
-                                    duration: kThemeChangeDuration,
-                                    curve: Curves.easeInOut,
-                                    style: GoogleFonts.josefinSlab(
-                                      textStyle: Theme.of(context).textTheme.headline4!.copyWith(
-                                            color: (controller.isSolving())
-                                                ? Colors.transparent
-                                                : (constellation.solved() ? cornsilk : Colors.white60),
-                                          ),
-                                    ),
-                                    child: Text(
-                                      constellation.solved() ? constellation.constellation.name : 'Unknown',
-                                    ),
+                              : Text(
+                                  constellation.solved() ? constellation.constellation.name : 'Unknown',
+                                  style: GoogleFonts.josefinSlab(
+                                    textStyle: Theme.of(context).textTheme.headline4!.copyWith(
+                                          color: (controller.isSolving())
+                                              ? Colors.transparent
+                                              : (constellation.solved() ? cornsilk : Colors.white60),
+                                        ),
                                   ),
                                 ),
                         ),
@@ -470,11 +475,19 @@ class ConstellationPuzzle extends StatelessWidget {
                                   : Obx(
                                       () {
                                         controller.previousTime();
-                                        return CustomPaint(
-                                          painter: ConstellationAnimationPainter(
-                                            constellation.constellationAnimation,
-                                            1,
-                                            starSize: constellation.constellation.starSize,
+                                        controller.selectedStar();
+                                        constellation.solved();
+                                        baseService.solvingState();
+                                        return CanvasTouchDetector(
+                                          builder: (context) => CustomPaint(
+                                            painter: ConstellationAnimationPainter(
+                                              context,
+                                              constellation.constellationAnimation,
+                                              1,
+                                              starSize: constellation.constellation.starSize,
+                                              onStarTap: controller.onStarTap,
+                                              selectedStar: controller.selectedStar(),
+                                            ),
                                           ),
                                         );
                                       },

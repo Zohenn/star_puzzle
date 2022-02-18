@@ -33,7 +33,7 @@ class ConstellationMeta {
     final gridSize = Size(96, 96);
     final scale = MediaQuery.of(Get.context!).devicePixelRatio;
     final size = gridSize * scale;
-    final foregroundPainter = ConstellationAnimationPainter(constellationAnimation, 0.3, useCircles: true);
+    final foregroundPainter = ConstellationAnimationPainter(Get.context!, constellationAnimation, 0.3, useCircles: true);
     // backgroundPainter.paint(canvas, size);
     canvas.drawRect(Offset.zero & size, Paint()..color = Get.theme.backgroundColor);
     foregroundPainter.paint(canvas, size);

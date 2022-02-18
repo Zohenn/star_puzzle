@@ -19,9 +19,15 @@ class Position {
 class Star {
   Star({
     required this.pos,
+    this.name,
+    this.magnitude,
+    this.distance,
   });
 
   final Position pos;
+  final String? name;
+  final double? magnitude;
+  final double? distance;
 }
 
 class AnimationStar extends Star {
@@ -53,19 +59,21 @@ class Constellation {
     required this.name,
     required this.skyFileName,
     required this.skyBoxOffset,
-    this.skyBoxSize,
+    Size? skyBoxSize,
     required this.stars,
     required this.lines,
     this.starSize,
-  });
+  }): _skyBoxSize = skyBoxSize;
 
   final String name;
   final String skyFileName;
   final Offset skyBoxOffset;
-  final Size? skyBoxSize;
+  final Size? _skyBoxSize;
   final List<Star> stars;
   final List<Line> lines;
   final double? starSize;
+
+  Size get skyBoxSize => _skyBoxSize ?? const Size.square(750);
 }
 
 class ConstellationAnimation {
