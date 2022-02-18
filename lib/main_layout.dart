@@ -14,10 +14,12 @@ class _MainLayoutController extends GetxController {
     super.onInit();
 
     selectedConstellation.value = Get.find<ConstellationService>().constellations[0];
-    selectedConstellation.value!.solved.value = true;
-    selectedConstellation.value!.bestMoves.value = 1;
-    selectedConstellation.value!.bestTime.value = 0;
-    selectedConstellation.value!.constellationAnimation.skipForward();
+    for (var constellation in Get.find<ConstellationService>().constellations) {
+      constellation.solved.value = true;
+      constellation.bestMoves.value = 1;
+      constellation.bestTime.value = 0;
+      constellation.constellationAnimation.skipForward();
+    }
   }
 }
 
@@ -43,8 +45,9 @@ class MainLayout extends StatelessWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: ColoredBox(color: Theme.of(context).backgroundColor,)
-              ),
+                  child: ColoredBox(
+                color: Theme.of(context).backgroundColor,
+              )),
               // BackgroundImageRenderer(gridSize: gridSize),
               Positioned.fill(
                 child: Obx(

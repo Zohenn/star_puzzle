@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:star_puzzle/constellation.dart';
+
+final numberFormatter = NumberFormat('0.00');
 
 class StarInfo extends StatelessWidget {
   const StarInfo({
@@ -12,9 +15,9 @@ class StarInfo extends StatelessWidget {
 
   String get name => star?.name ?? '';
 
-  String get magnitude => star?.magnitude?.toString() ?? '';
+  String get magnitude => star?.magnitude != null ? numberFormatter.format(star!.magnitude) : '';
 
-  String get distance => star?.distance?.toString() ?? '';
+  String get distance => star?.distance != null ? numberFormatter.format(star!.distance) : '';
 
   @override
   Widget build(BuildContext context) {
