@@ -120,6 +120,8 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
           selectedStarAnimationController!.forward(from: 0);
         }
       });
+    } else {
+      selectedStarAnimationController!.reset();
     }
   }
 
@@ -136,6 +138,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
     stopwatch?.stop();
     elapsedSecondsTimer?.cancel();
     ticker?.dispose();
+    selectedStarAnimationController?.dispose();
     super.onClose();
   }
 }
@@ -155,6 +158,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
     switch (solvingState) {
       case SolvingState.none:
         return TextButton(
+          key: const ValueKey('solve'),
           onPressed: () {
             if (!controller.isSolving()) {
               controller.initPuzzle();
@@ -168,6 +172,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
         );
       case SolvingState.solving:
         return TextButton(
+          key: const ValueKey('back'),
           onPressed: () {
             controller.cancelPuzzle();
             controller.isSolving.value = false;
@@ -185,6 +190,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
         );
       case SolvingState.done:
         return TextButton(
+          key: const ValueKey('ok'),
           onPressed: () => baseService.solvingState.value = SolvingState.none,
           child: const Text('Nice!'),
         );
@@ -416,17 +422,5 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
         ],
       ),
     );
-  }
-}
-
-class StarPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawPath(getStarPath(size), Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }

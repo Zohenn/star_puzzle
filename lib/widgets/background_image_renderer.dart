@@ -29,25 +29,20 @@ class BackgroundImageRenderer extends StatelessWidget {
     return GetBuilder<_BackgroundImageRendererController>(
       init: _BackgroundImageRendererController(constellation),
       global: false,
-      builder: (controller) => Builder(builder: (context) {
-        if (gridKey.currentContext == null) {
-          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {});
-        }
-        return ColoredBox(
-          key: controller.containerKey,
-          color: constellation.constellation.backgroundColor ?? Theme.of(context).backgroundColor,
-          child: CustomPaint(
-            painter: ConstellationSkyBackgroundPainter(
-              constellation.skyImage,
-              constellation.constellation.skyBoxOffset,
-              constellation.constellation.skyBoxSize,
-              MediaQuery.of(context),
-              containerKey,
-              gridKey,
-            ),
+      builder: (controller) => ColoredBox(
+        key: controller.containerKey,
+        color: constellation.constellation.backgroundColor ?? Theme.of(context).backgroundColor,
+        child: CustomPaint(
+          painter: ConstellationSkyBackgroundPainter(
+            constellation.skyImage!,
+            constellation.constellation.skyBoxOffset,
+            constellation.constellation.skyBoxSize,
+            MediaQuery.of(context),
+            containerKey,
+            gridKey,
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
@@ -56,7 +51,7 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
   ConstellationSkyBackgroundPainter(
       this.image, this.boxOffset, this.boxSize, this.mqData, this.containerKey, this.gridKey);
 
-  final ui.Image? image;
+  final ui.Image image;
   final Offset boxOffset;
   final Size boxSize;
   final MediaQueryData mqData;
@@ -65,7 +60,7 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (image != null && gridKey.currentContext != null) {
+    if (gridKey.currentContext != null) {
       final context = gridKey.currentContext!;
       final box = context.findRenderObject() as RenderBox;
       final pos =
@@ -73,7 +68,7 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
       final gridSize = box.size * mqData.devicePixelRatio;
       final scale = boxSize.width / gridSize.width;
       canvas.drawImageRect(
-          image!,
+          image,
           (boxOffset - pos * mqData.devicePixelRatio * scale) & (size * mqData.devicePixelRatio * scale),
           Offset.zero & size,
           Paint());

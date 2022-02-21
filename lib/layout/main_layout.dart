@@ -13,12 +13,12 @@ class _MainLayoutController extends GetxController {
     super.onInit();
 
     selectedConstellation.value = Get.find<ConstellationService>().constellations[0];
-    for (var constellation in Get.find<ConstellationService>().constellations) {
-      constellation.solved.value = true;
-      constellation.bestMoves.value = 1;
-      constellation.bestTime.value = 0;
-      constellation.constellationAnimation.skipForward();
-    }
+    // for (var constellation in Get.find<ConstellationService>().constellations) {
+    //   constellation.solved.value = true;
+    //   constellation.bestMoves.value = 1;
+    //   constellation.bestTime.value = 0;
+    //   constellation.constellationAnimation.skipForward();
+    // }
   }
 }
 
