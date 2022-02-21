@@ -88,8 +88,12 @@ class MainLayout extends StatelessWidget with SizeMixin {
                                     type: MaterialType.transparency,
                                     child: Builder(
                                       builder: (context) => InkWell(
-                                        onTap: () {
-                                          Get.dialog(SkyMap());
+                                        onTap: () async {
+                                          final constellation = await Get.dialog<ConstellationMeta>(const SkyMap(openConstellationOnTap: true));
+                                          if(constellation != null){
+                                            controller.selectedConstellation.value = constellation;
+                                            DefaultTabController.of(context)!.index = constellations.indexOf(constellation);
+                                          }
                                         },
                                       ),
                                     ),

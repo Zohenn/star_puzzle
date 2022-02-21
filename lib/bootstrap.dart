@@ -14,6 +14,7 @@ class Bootstrap extends StatefulWidget {
 
 class _BootstrapState extends State<Bootstrap> {
   final Future<void>? _initFuture = Get.put(BaseService()).initFuture;
+  bool redirected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +33,10 @@ class _BootstrapState extends State<Bootstrap> {
         if (snapshot.connectionState == ConnectionState.done) {
           // addPostFrameCallback is needed here, so it doesn't throw an error about using setState in build method
           WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-            navigator!.pushReplacement(MaterialPageRoute(builder: (_) => const MainLayout()));
+            if (!redirected) {
+              navigator!.pushReplacement(MaterialPageRoute(builder: (_) => const MainLayout()));
+              redirected = true;
+            }
           });
           return Container(
             color: Theme.of(context).backgroundColor,

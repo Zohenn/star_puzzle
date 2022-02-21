@@ -4,16 +4,34 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
+import 'package:touchable/touchable.dart';
 
 class _SkyMapController extends GetxController with GetTickerProviderStateMixin {
-  final showBoundaries = false.obs;
+  _SkyMapController(this.reveal);
+
+  final bool reveal;
   AnimationController? animationController;
 
   @override
   void onInit() {
     super.onInit();
 
-    animationController = AnimationController(vsync: this, duration: 500.milliseconds);
+    animationController = AnimationController(vsync: this, duration: 1.seconds);
+
+    if (reveal) {
+      animationController!.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          Future.delayed(1.seconds, () {
+            if (Get.isDialogOpen!) {
+              Get.back();
+            }
+          });
+        }
+      });
+      Future.delayed(500.milliseconds, () {
+        animate();
+      });
+    }
   }
 
   void animate() {
@@ -28,12 +46,23 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
 }
 
 class SkyMap extends StatelessWidget {
-  const SkyMap({Key? key}) : super(key: key);
+  const SkyMap({
+    Key? key,
+    this.revealConstellation,
+    this.openConstellationOnTap = false,
+  }) : super(key: key);
+
+  final ConstellationMeta? revealConstellation;
+  final bool openConstellationOnTap;
+
+  void _onConstellationTap(ConstellationMeta constellationMeta) {
+    Get.back(result: constellationMeta);
+  }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<_SkyMapController>(
-      init: _SkyMapController(),
+      init: _SkyMapController(revealConstellation != null),
       global: false,
       builder: (controller) => Dialog(
         clipBehavior: Clip.hardEdge,
@@ -48,28 +77,14 @@ class SkyMap extends StatelessWidget {
                 'assets/sky_map.jpg',
                 fit: BoxFit.contain,
               ),
-              Obx(
-                () => CustomPaint(
+              CanvasTouchDetector(
+                builder: (context) => CustomPaint(
                   painter: SkyMapConstellationPainter(
-                    showBoundaries: controller.showBoundaries(),
+                    context: context,
+                    revealConstellation: revealConstellation,
                     animationController: controller.animationController!,
+                    onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
                   ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () => controller.showBoundaries.value = !controller.showBoundaries(),
-                      child: Text('text'),
-                    ),
-                    TextButton(
-                      onPressed: () => controller.animate(),
-                      child: Text('animate'),
-                    ),
-                  ],
                 ),
               ),
             ],
@@ -82,19 +97,24 @@ class SkyMap extends StatelessWidget {
 
 class SkyMapConstellationPainter extends CustomPainter {
   SkyMapConstellationPainter({
-    required this.showBoundaries,
+    required this.context,
+    this.revealConstellation,
     required this.animationController,
+    this.onConstellationTap,
   }) : super(repaint: animationController);
 
-  final bool showBoundaries;
+  final BuildContext context;
+  final ConstellationMeta? revealConstellation;
   final AnimationController animationController;
+  final void Function(ConstellationMeta)? onConstellationTap;
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas _canvas, Size size) {
+    final canvas = TouchyCanvas(context, _canvas);
     final constellations = Get.find<ConstellationService>().constellations;
 
     // canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white.withOpacity(0.2));
-    Path? firstBoundariesPath;
+    Path? revealBoundariesPath;
 
     for (var constellation in constellations) {
       var boundaries = constellation.constellation.boundaries;
@@ -108,7 +128,8 @@ class SkyMapConstellationPainter extends CustomPainter {
         }
         boundariesPath.close();
         // boundariesPath.addRect(boundariesPath.getBounds().topLeft & Size(boundariesPath.getBounds().size.width / 2, boundariesPath.getBounds().size.height));
-        final revealBoxWidth = constellation == constellations.first ? animationController.value : 1;
+        final revealBoxWidth =
+            constellation == revealConstellation ? animationController.value : (constellation.solved() ? 1 : 0);
         canvas.drawPath(
           Path.combine(
               PathOperation.difference,
@@ -126,18 +147,24 @@ class SkyMapConstellationPainter extends CustomPainter {
           Paint()
             ..style = PaintingStyle.stroke
             ..color = cornsilk.withOpacity(0.4),
+          onTapDown: (details) {
+            onConstellationTap?.call(constellation);
+          },
+          paintStyleForTouch: PaintingStyle.fill,
         );
 
-        if (constellation == constellations.first) {
-          firstBoundariesPath = boundariesPath;
+        if (constellation == revealConstellation) {
+          revealBoundariesPath = boundariesPath;
         }
       }
     }
 
-    final backgroundPath = Path()..fillType = PathFillType.evenOdd;
-    backgroundPath.addRect(Offset.zero & size);
-    backgroundPath.addPath(firstBoundariesPath!, Offset.zero);
-    canvas.drawPath(backgroundPath, Paint()..color = Colors.white.withOpacity(0.2));
+    if (revealBoundariesPath != null) {
+      final backgroundPath = Path()..fillType = PathFillType.evenOdd;
+      backgroundPath.addRect(Offset.zero & size);
+      backgroundPath.addPath(revealBoundariesPath, Offset.zero);
+      canvas.drawPath(backgroundPath, Paint()..color = Colors.white.withOpacity(0.2));
+    }
   }
 
   @override

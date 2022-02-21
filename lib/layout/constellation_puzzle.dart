@@ -28,6 +28,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   final puzzle = Rxn<Puzzle>();
   final moves = 0.obs;
   final elapsedSeconds = 0.obs;
+  bool? firstSolve;
   Stopwatch? stopwatch;
   Timer? elapsedSecondsTimer;
   Ticker? ticker;
@@ -93,7 +94,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   }
 
   void onComplete() {
-    final firstSolve = !constellation.solved();
+    firstSolve = !constellation.solved();
     constellation.solved.value = true;
     stopwatch?.stop();
     elapsedSecondsTimer?.cancel();
@@ -104,7 +105,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       constellation.bestTime.value = elapsedSeconds();
     }
     isSolving.value = false;
-    if (firstSolve) {
+    if (firstSolve!) {
       startAnimation();
     } else {
       Get.find<BaseService>().solvingState.value = SolvingState.done;
@@ -192,7 +193,12 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
       case SolvingState.done:
         return TextButton(
           key: const ValueKey('ok'),
-          onPressed: () => baseService.solvingState.value = SolvingState.none,
+          onPressed: () async {
+            if (controller.firstSolve!) {
+              await Get.dialog(SkyMap(revealConstellation: constellation), barrierDismissible: false);
+            }
+            baseService.solvingState.value = SolvingState.none;
+          },
           child: const Text('Nice!'),
         );
     }
