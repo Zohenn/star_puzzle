@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
@@ -56,14 +54,15 @@ class SkyMap extends StatelessWidget {
   final bool openConstellationOnTap;
 
   void _onConstellationTap(ConstellationMeta constellationMeta) {
-    Get.back(result: constellationMeta);
+    if (constellationMeta.solved()) {
+      Get.back(result: constellationMeta);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<_SkyMapController>(
       init: _SkyMapController(revealConstellation != null),
-      global: false,
       builder: (controller) => Dialog(
         clipBehavior: Clip.hardEdge,
         backgroundColor: Colors.black,

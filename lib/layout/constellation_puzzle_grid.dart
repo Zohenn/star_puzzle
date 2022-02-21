@@ -96,7 +96,7 @@ class ConstellationPuzzleGrid extends StatelessWidget with SizeMixin {
     }
     return GetBuilder<_ConstellationPuzzleGridController>(
       init: _ConstellationPuzzleGridController(puzzle!, onShuffleEnd, onComplete),
-      global: false,
+      tag: constellation.name,
       builder: (controller) => Obx(
         () => Stack(
           key: controller.containerKey,

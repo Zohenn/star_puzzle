@@ -208,7 +208,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
   Widget build(BuildContext context) {
     return GetBuilder<_ConstellationPuzzleController>(
       init: _ConstellationPuzzleController(constellation),
-      global: false,
+      tag: constellation.constellation.name,
       builder: (controller) => Stack(
         key: controller.containerKey,
         children: [

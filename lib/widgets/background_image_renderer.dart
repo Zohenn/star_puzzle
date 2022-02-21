@@ -28,7 +28,7 @@ class BackgroundImageRenderer extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<_BackgroundImageRendererController>(
       init: _BackgroundImageRendererController(constellation),
-      global: false,
+      tag: constellation.constellation.name,
       builder: (controller) => ColoredBox(
         key: controller.containerKey,
         color: constellation.constellation.backgroundColor ?? Theme.of(context).backgroundColor,

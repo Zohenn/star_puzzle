@@ -39,7 +39,6 @@ class MainLayout extends StatelessWidget with SizeMixin {
     return Scaffold(
       body: GetBuilder<_MainLayoutController>(
         init: _MainLayoutController(),
-        global: false,
         builder: (controller) => DefaultTabController(
           length: constellations.length,
           initialIndex: constellations.indexOf(controller.selectedConstellation()!),

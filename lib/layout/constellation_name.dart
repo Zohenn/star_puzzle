@@ -108,7 +108,7 @@ class ConstellationName extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<_ConstellationNameController>(
       init: _ConstellationNameController(constellation),
-      global: false,
+      tag: constellation.constellation.name,
       builder: (controller) {
         if(animate && !controller.nameAnimationController.isAnimating){
           controller.nameAnimationController.forward();
