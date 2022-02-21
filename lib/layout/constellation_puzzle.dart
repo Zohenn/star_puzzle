@@ -12,6 +12,7 @@ import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/size_mixin.dart';
 import 'package:star_puzzle/layout/star_info.dart';
+import 'package:star_puzzle/sky_map.dart';
 import 'package:star_puzzle/star_path.dart';
 import 'package:star_puzzle/utils.dart';
 import 'package:star_puzzle/widgets/background_image_renderer.dart';
@@ -373,7 +374,6 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // todo: make button impossible to tap when invisible
                         TextButtonTheme(
                           data: TextButtonThemeData(
                             style: Theme.of(context).textButtonTheme.style!.copyWith(

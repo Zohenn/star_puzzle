@@ -20,6 +20,7 @@ class BaseService extends GetxService {
 
   final size = 3;
   final gridSize = const Size.square(300);
+
   Size get tileSize => gridSize / size.toDouble();
 
   final constellationIconSize = const Size.square(96);
@@ -33,14 +34,23 @@ class BaseService extends GetxService {
   }
 
   Future init() async {
-    await precacheImage(AssetImage('assets/night_sky.jpg'), Get.context!);
-    // ByteData bd = await rootBundle.load('assets/night_sky.jpg');
-    //
-    // final Uint8List bytes = Uint8List.view(bd.buffer);
-    // final ui.Codec codec = await ui.instantiateImageCodec(bytes);
-    // backgroundImage = (await codec.getNextFrame()).image;
-    // codec.dispose();
+    final task = await Future.delayed(20.milliseconds, () async {
+      await Future.wait(
+        [
+          precacheImage(AssetImage('assets/night_sky.jpg'), Get.context!),
+          precacheImage(AssetImage('assets/sky_map.jpg'), Get.context!),
+        ],
+      );
+      // ByteData bd = await rootBundle.load('assets/night_sky.jpg');
+      //
+      // final Uint8List bytes = Uint8List.view(bd.buffer);
+      // final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+      // backgroundImage = (await codec.getNextFrame()).image;
+      // codec.dispose();
 
-    await Get.put(ConstellationService()).initFuture;
+      await Get.put(ConstellationService()).initFuture;
+    });
+
+    await task;
   }
 }

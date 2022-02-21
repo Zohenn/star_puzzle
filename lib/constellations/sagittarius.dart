@@ -56,5 +56,21 @@ final sagittarius = Constellation(
     Line(15, 18),
     Line(18, 19)
   ],
+  boundaries: [
+    Position(1294 / 3660, 2159 / 2160),
+    Position(1244 / 3660, 2112 / 2160),
+    Position(1318 / 3660, 2041 / 2160),
+    Position(1151 / 3660, 1774 / 2160),
+    Position(1385 / 3660, 1673 / 2160),
+    Position(1411 / 3660, 1720 / 2160),
+    Position(1506 / 3660, 1662 / 2160),
+    Position(1591 / 3660, 1606 / 2160),
+    Position(1687 / 3660, 1722 / 2160),
+    Position(1662 / 3660, 1748 / 2160),
+    Position(1728 / 3660, 1807 / 2160),
+    Position(1584 / 3660, 1999 / 2160),
+    Position(1721 / 3660, 2074 / 2160),
+    Position(1688 / 3660, 2159 / 2160)
+  ],
   starSize: 12,
 );

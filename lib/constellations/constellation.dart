@@ -70,6 +70,7 @@ class Constellation {
     required this.stars,
     required this.lines,
     this.starSize,
+    this.boundaries,
   }) : _skyBoxSize = skyBoxSize;
 
   final String name;
@@ -80,6 +81,7 @@ class Constellation {
   final List<Star> stars;
   final List<Line> lines;
   final double? starSize;
+  final List<Position>? boundaries;
 
   Size get skyBoxSize => _skyBoxSize ?? const Size.square(750);
 }
