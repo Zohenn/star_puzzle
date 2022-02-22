@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/layout/constellation_puzzle.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/constellation_puzzle.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/constellation_animation_painter.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/size_mixin.dart';
-import 'package:star_puzzle/sky_map.dart';
+import 'package:star_puzzle/utils/size_mixin.dart';
+import 'package:star_puzzle/layout/sky_map.dart';
 
 class _MainLayoutController extends GetxController {
   final selectedConstellation = Rxn<ConstellationMeta>();
@@ -127,12 +128,21 @@ class MainLayout extends StatelessWidget with SizeMixin {
                                           children: [
                                             SizedBox.fromSize(
                                               size: constellationIconSize,
-                                              child: Obx(
-                                                () => Image.memory(
-                                                  constellation.imageBytes()!,
-                                                  fit: BoxFit.cover,
+                                              child: ColoredBox(
+                                                color: Theme.of(context).backgroundColor,
+                                                child: RepaintBoundary(
+                                                  child: CustomPaint(
+                                                    isComplex: true,
+                                                    painter: ConstellationAnimationPainter(context, constellation.constellationAnimation, 0.3, useCircles: true),
+                                                  ),
                                                 ),
                                               ),
+                                              // child: Obx(
+                                              //   () => Image.memory(
+                                              //     constellation.imageBytes()!,
+                                              //     fit: BoxFit.cover,
+                                              //   ),
+                                              // ),
                                             ),
                                             Positioned.fill(
                                               child: AnimatedContainer(

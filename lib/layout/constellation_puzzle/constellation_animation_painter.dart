@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:star_puzzle/constellations/constellation.dart';
-import 'package:star_puzzle/star_path.dart';
+import 'package:star_puzzle/models/constellation.dart';
+import 'package:star_puzzle/utils/star_path.dart';
 import 'package:touchable/touchable.dart';
 
 class ConstellationAnimationPainter extends CustomPainter {

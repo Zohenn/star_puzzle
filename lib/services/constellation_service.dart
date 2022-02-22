@@ -2,14 +2,11 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/constellation_progress.dart';
-import 'package:star_puzzle/constellations/constellation.dart';
+import 'package:star_puzzle/models/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/constellations/sagittarius.dart';
-import 'package:star_puzzle/painters.dart';
-import 'package:star_puzzle/services/base_service.dart';
+import 'package:star_puzzle/models/constellation_progress.dart';
 
 class ConstellationMeta {
   ConstellationMeta(this.constellation) : constellationAnimation = ConstellationAnimation.from(constellation);
@@ -19,32 +16,7 @@ class ConstellationMeta {
   final bestMoves = RxnInt();
   final bestTime = RxnInt();
   final solved = false.obs;
-  ui.Image? image;
   ui.Image? skyImage;
-  Rxn<Uint8List> imageBytes = Rxn<Uint8List>();
-
-  Future loadImages() {
-    return Future.wait([loadImage(), loadSkyImage()]);
-  }
-
-  Future loadImage() async {
-    ui.PictureRecorder recorder = ui.PictureRecorder();
-    Canvas canvas = Canvas(recorder);
-    final size = Get.find<BaseService>().constellationIconSize * MediaQuery.of(Get.context!).devicePixelRatio;
-    final foregroundPainter = ConstellationAnimationPainter(Get.context!, constellationAnimation, 0.3, useCircles: true);
-    // backgroundPainter.paint(canvas, size);
-    canvas.drawRect(Offset.zero & size, Paint()..color = Get.theme.backgroundColor);
-    foregroundPainter.paint(canvas, size);
-    image = await recorder.endRecording().toImage(size.width.floor(), size.height.floor());
-
-    final byteData = await image!.toByteData(format: ui.ImageByteFormat.rawUnmodified);
-    imageBytes.value = Uint8List.view(byteData!.buffer);
-  }
-
-  Future loadFinishedImage() async {
-    constellationAnimation.skipForward();
-    await loadImage();
-  }
 
   Future loadSkyImage() async {
     ByteData bd = await rootBundle.load('assets/${constellation.skyFileName}');
@@ -83,6 +55,15 @@ class ConstellationService extends GetxService {
   }
 
   Future loadImages() {
-    return Future.wait(constellations.map((e) => e.loadImages()));
+    return Future.wait(constellations.map((e) => e.loadSkyImage()));
+  }
+
+  @override
+  void onClose() {
+    for(var constellation in constellations){
+      constellation.skyImage?.dispose();
+    }
+
+    super.onClose();
   }
 }

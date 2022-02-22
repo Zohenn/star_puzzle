@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:star_puzzle/star_path.dart';
+import 'package:star_puzzle/utils/star_path.dart';
 
 class StarLoader extends StatefulWidget {
   const StarLoader({

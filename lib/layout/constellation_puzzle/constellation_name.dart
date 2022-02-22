@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/star_path.dart';
+import 'package:star_puzzle/utils/star_path.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 
 class _ConstellationNameController extends GetxController with GetTickerProviderStateMixin {

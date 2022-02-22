@@ -4,20 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:star_puzzle/layout/constellation_name.dart';
-import 'package:star_puzzle/layout/constellation_puzzle_grid.dart';
-import 'package:star_puzzle/painters.dart';
-import 'package:star_puzzle/puzzle.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/constellation_name.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/constellation_puzzle_grid.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/constellation_animation_painter.dart';
+import 'package:star_puzzle/models/puzzle.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
-import 'package:star_puzzle/size_mixin.dart';
+import 'package:star_puzzle/utils/size_mixin.dart';
 import 'package:star_puzzle/layout/star_info.dart';
-import 'package:star_puzzle/sky_map.dart';
-import 'package:star_puzzle/star_path.dart';
-import 'package:star_puzzle/utils.dart';
-import 'package:star_puzzle/widgets/background_image_renderer.dart';
+import 'package:star_puzzle/layout/sky_map.dart';
+import 'package:star_puzzle/utils/utils.dart';
+import 'package:star_puzzle/layout/constellation_puzzle/background_image_renderer.dart';
 
-import 'package:star_puzzle/constellations/constellation.dart';
+import 'package:star_puzzle/models/constellation.dart';
 import 'package:touchable/touchable.dart';
 
 class _ConstellationPuzzleController extends GetxController with GetTickerProviderStateMixin {
@@ -81,7 +80,6 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       previousTime.value = elapsed.inMilliseconds;
       if (finished) {
         ticker!.stop();
-        constellation.loadImage();
         showName.value = true;
       }
     });

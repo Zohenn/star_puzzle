@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
-import 'package:star_puzzle/constellation_progress.dart';
+import 'package:star_puzzle/models/constellation_progress.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 
 enum SolvingState {

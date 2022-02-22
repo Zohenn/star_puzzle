@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:star_puzzle/bootstrap.dart';
-import 'package:star_puzzle/constellation_progress.dart';
+import 'package:star_puzzle/models/constellation_progress.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 
 void main() async {

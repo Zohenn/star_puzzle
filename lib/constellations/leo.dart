@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:star_puzzle/constellations/constellation.dart';
+import 'package:star_puzzle/models/constellation.dart';
 
 final leo = Constellation(
   name: 'Leo',
