@@ -71,9 +71,20 @@ class BaseService extends GetxService {
     _box.put(constellation.constellation.name, progress);
   }
 
+  void resetProgress() {
+    final constellationService = Get.find<ConstellationService>();
+    for(var constellation in constellationService.constellations){
+      constellation.solved.value = false;
+      constellation.bestMoves.value = null;
+      constellation.bestTime.value = null;
+    }
+    _box.clear();
+  }
+
   @override
   void onClose() {
     _box.close();
     super.onClose();
   }
+
 }

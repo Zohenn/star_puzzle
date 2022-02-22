@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/layout/constellation_puzzle/constellation_puzzle.dart';
-import 'package:star_puzzle/layout/constellation_puzzle/constellation_animation_painter.dart';
+import 'package:star_puzzle/views/constellation_puzzle/constellation_puzzle.dart';
+import 'package:star_puzzle/views/constellation_puzzle/constellation_animation_painter.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
 import 'package:star_puzzle/utils/size_mixin.dart';
-import 'package:star_puzzle/layout/sky_map.dart';
+import 'package:star_puzzle/views/info_dialog.dart';
+import 'package:star_puzzle/views/sky_map.dart';
+import 'package:star_puzzle/widgets/theme_provider.dart';
 
 class _MainLayoutController extends GetxController {
   final selectedConstellation = Rxn<ConstellationMeta>();
@@ -15,12 +17,6 @@ class _MainLayoutController extends GetxController {
     super.onInit();
 
     selectedConstellation.value = Get.find<ConstellationService>().constellations[0];
-    // for (var constellation in Get.find<ConstellationService>().constellations) {
-    //   constellation.solved.value = true;
-    //   constellation.bestMoves.value = 1;
-    //   constellation.bestTime.value = 0;
-    //   constellation.constellationAnimation.skipForward();
-    // }
   }
 }
 
@@ -89,10 +85,12 @@ class MainLayout extends StatelessWidget with SizeMixin {
                                     child: Builder(
                                       builder: (context) => InkWell(
                                         onTap: () async {
-                                          final constellation = await Get.dialog<ConstellationMeta>(const SkyMap(openConstellationOnTap: true));
-                                          if(constellation != null){
+                                          final constellation = await Get.dialog<ConstellationMeta>(
+                                              const SkyMap(openConstellationOnTap: true));
+                                          if (constellation != null) {
                                             controller.selectedConstellation.value = constellation;
-                                            DefaultTabController.of(context)!.index = constellations.indexOf(constellation);
+                                            DefaultTabController.of(context)!.index =
+                                                constellations.indexOf(constellation);
                                           }
                                         },
                                       ),
@@ -133,7 +131,9 @@ class MainLayout extends StatelessWidget with SizeMixin {
                                                 child: RepaintBoundary(
                                                   child: CustomPaint(
                                                     isComplex: true,
-                                                    painter: ConstellationAnimationPainter(context, constellation.constellationAnimation, 0.3, useCircles: true),
+                                                    painter: ConstellationAnimationPainter(
+                                                        context, constellation.constellationAnimation, 0.3,
+                                                        useCircles: true),
                                                   ),
                                                 ),
                                               ),
@@ -177,8 +177,26 @@ class MainLayout extends StatelessWidget with SizeMixin {
                             ),
                           ),
                         ),
-                        SizedBox.fromSize(
-                          size: constellationIconSize + Offset(constellationIconPadding.along(Axis.vertical), 0),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: SizedBox.fromSize(
+                            size: constellationIconSize,
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: Align(
+                                alignment: Alignment.bottomRight,
+                                child: TextButton(
+                                  child: Icon(Icons.info_outline, color: cornsilk),
+                                  onPressed: () => Get.dialog(const InfoDialog()),
+                                  style: Theme.of(context).textButtonTheme.style!.copyWith(
+                                        padding: MaterialStateProperty.all(
+                                          const EdgeInsets.all(12.0),
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_puzzle/main.dart';
-import 'package:star_puzzle/layout/main_layout.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:star_puzzle/views/main_layout.dart';
 import 'package:star_puzzle/services/base_service.dart';
 import 'package:star_puzzle/widgets/star_loader.dart';
+import 'package:star_puzzle/widgets/theme_provider.dart';
 
 class Bootstrap extends StatefulWidget {
   const Bootstrap({Key? key}) : super(key: key);
@@ -45,8 +46,20 @@ class _BootstrapState extends State<Bootstrap> {
 
         return Container(
           color: Theme.of(context).backgroundColor,
-          child: const Center(
-            child: StarLoader(),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Stazzle',
+                  style: GoogleFonts.josefinSlab(
+                    textStyle: Theme.of(context).textTheme.headlineMedium!.copyWith(color: cornsilk),
+                  ),
+                ),
+                const SizedBox(height: 36.0),
+                const StarLoader(),
+              ],
+            ),
           ),
         );
       },

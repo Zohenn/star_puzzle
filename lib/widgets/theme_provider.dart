@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 final cornsilk = Color(0xfffff8dc);
+final _backgroundColor = Color(0xff081229);
 
 final _textTheme = GoogleFonts.ralewayTextTheme(Typography.material2018().white.apply(bodyColor: cornsilk));
 
@@ -18,7 +19,7 @@ class ThemeProvider extends StatelessWidget {
     return Theme(
       data: ThemeData(
         visualDensity: VisualDensity.adaptivePlatformDensity,
-        backgroundColor: Color(0xff081229),
+        backgroundColor: _backgroundColor,
         applyElevationOverlayColor: true,
         textTheme: _textTheme,
         // textTheme: Typography.material2018().white,
@@ -46,6 +47,10 @@ class ThemeProvider extends StatelessWidget {
             }),
           ),
         ),
+        dialogTheme: DialogTheme(
+          backgroundColor: _backgroundColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        )
       ),
       child: child,
     );

@@ -28,7 +28,7 @@ class StarInfo extends StatelessWidget {
         Opacity(
           opacity: star == null ? 1 : 0,
           child: Text(
-            'Click on a star to see its info',
+            'Click on a star to see details',
             style: TextStyle(color: Theme.of(context).textTheme.caption!.color),
           ),
         ),

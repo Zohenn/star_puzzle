@@ -169,10 +169,14 @@ class SkyMapConstellationPainter extends CustomPainter {
         if (constellation.solved() && revealConstellation == null && mousePosition != null) {
           if (boundariesPath.contains(mousePosition!)) {
             canvas.drawPath(
-                boundariesPath,
-                Paint()
-                  ..style = PaintingStyle.fill
-                  ..color = Colors.white.withOpacity(0.2));
+              boundariesPath,
+              Paint()
+                ..style = PaintingStyle.fill
+                ..color = Colors.white.withOpacity(0.2),
+              onTapDown: (details) {
+                onConstellationTap?.call(constellation);
+              },
+            );
           }
         }
       }
