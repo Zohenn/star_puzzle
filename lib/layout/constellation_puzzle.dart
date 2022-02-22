@@ -104,6 +104,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
     if (constellation.bestTime() == null || elapsedSeconds() < constellation.bestTime()!) {
       constellation.bestTime.value = elapsedSeconds();
     }
+    Get.find<BaseService>().saveConstellationProgress(constellation);
     isSolving.value = false;
     if (firstSolve!) {
       startAnimation();

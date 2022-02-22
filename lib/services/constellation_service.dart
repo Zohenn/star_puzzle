@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:star_puzzle/constellation_progress.dart';
 import 'package:star_puzzle/constellations/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/constellations/sagittarius.dart';
@@ -53,6 +54,16 @@ class ConstellationMeta {
     skyImage = (await codec.getNextFrame()).image;
     codec.dispose();
   }
+
+  void loadProgress(ConstellationProgress constellationProgress) {
+    solved.value = constellationProgress.solved;
+    bestMoves.value = constellationProgress.bestMoves;
+    bestTime.value = constellationProgress.bestTime;
+
+    if(solved()){
+      constellationAnimation.skipForward();
+    }
+  }
 }
 
 class ConstellationService extends GetxService {
@@ -60,20 +71,18 @@ class ConstellationService extends GetxService {
 
   final List<Constellation> _constellations = [leo, sagittarius];
   final List<ConstellationMeta> constellations = [];
-  late Future initFuture;
 
   @override
   void onInit() {
     super.onInit();
 
-    initFuture = init();
+    for(var constellation in _constellations){
+      final constellationMeta = ConstellationMeta(constellation);
+      constellations.add(constellationMeta);
+    }
   }
 
-  Future init() async {
-    await Future.wait(_constellations.map((e) {
-      final constellationMeta = ConstellationMeta(e);
-      constellations.add(constellationMeta);
-      return constellationMeta.loadImages();
-    }));
+  Future loadImages() {
+    return Future.wait(constellations.map((e) => e.loadImages()));
   }
 }
