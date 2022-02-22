@@ -9,6 +9,7 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
 
   final bool reveal;
   AnimationController? animationController;
+  final mousePosition = Rxn<Offset>();
 
   @override
   void onInit() {
@@ -69,24 +70,33 @@ class SkyMap extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: AspectRatio(
           aspectRatio: 3660 / 2160,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'assets/sky_map.jpg',
-                fit: BoxFit.contain,
-              ),
-              CanvasTouchDetector(
-                builder: (context) => CustomPaint(
-                  painter: SkyMapConstellationPainter(
-                    context: context,
-                    revealConstellation: revealConstellation,
-                    animationController: controller.animationController!,
-                    onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
-                  ),
+          child: MouseRegion(
+            onHover: (hoverEvent) => controller.mousePosition.value = hoverEvent.localPosition,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/sky_map.jpg',
+                  fit: BoxFit.contain,
                 ),
-              ),
-            ],
+                Obx(
+                  () {
+                    controller.mousePosition();
+                    return CanvasTouchDetector(
+                      builder: (context) => CustomPaint(
+                        painter: SkyMapConstellationPainter(
+                          context: context,
+                          revealConstellation: revealConstellation,
+                          animationController: controller.animationController!,
+                          onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
+                          mousePosition: controller.mousePosition(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -100,19 +110,20 @@ class SkyMapConstellationPainter extends CustomPainter {
     this.revealConstellation,
     required this.animationController,
     this.onConstellationTap,
+    this.mousePosition,
   }) : super(repaint: animationController);
 
   final BuildContext context;
   final ConstellationMeta? revealConstellation;
   final AnimationController animationController;
   final void Function(ConstellationMeta)? onConstellationTap;
+  final Offset? mousePosition;
 
   @override
   void paint(Canvas _canvas, Size size) {
     final canvas = TouchyCanvas(context, _canvas);
     final constellations = Get.find<ConstellationService>().constellations;
 
-    // canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white.withOpacity(0.2));
     Path? revealBoundariesPath;
 
     for (var constellation in constellations) {
@@ -126,7 +137,6 @@ class SkyMapConstellationPainter extends CustomPainter {
           boundariesPath.lineTo(offset.dx, offset.dy);
         }
         boundariesPath.close();
-        // boundariesPath.addRect(boundariesPath.getBounds().topLeft & Size(boundariesPath.getBounds().size.width / 2, boundariesPath.getBounds().size.height));
         final revealBoxWidth =
             constellation == revealConstellation ? animationController.value : (constellation.solved() ? 1 : 0);
         canvas.drawPath(
@@ -155,6 +165,16 @@ class SkyMapConstellationPainter extends CustomPainter {
         if (constellation == revealConstellation) {
           revealBoundariesPath = boundariesPath;
         }
+
+        if (constellation.solved() && revealConstellation == null && mousePosition != null) {
+          if (boundariesPath.contains(mousePosition!)) {
+            canvas.drawPath(
+                boundariesPath,
+                Paint()
+                  ..style = PaintingStyle.fill
+                  ..color = Colors.white.withOpacity(0.2));
+          }
+        }
       }
     }
 
@@ -167,5 +187,7 @@ class SkyMapConstellationPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant SkyMapConstellationPainter oldDelegate) => false;
+  bool shouldRepaint(covariant SkyMapConstellationPainter oldDelegate) {
+    return mousePosition != oldDelegate.mousePosition;
+  }
 }
