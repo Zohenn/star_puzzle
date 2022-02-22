@@ -47,3 +47,5 @@ app.*.map.json
 
 *.Ink
 build.bat
+.firebaserc
+.firebase/
