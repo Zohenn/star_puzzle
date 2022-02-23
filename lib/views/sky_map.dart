@@ -68,36 +68,54 @@ class SkyMap extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: AspectRatio(
-          aspectRatio: 3660 / 2160,
-          child: MouseRegion(
-            onHover: (hoverEvent) => controller.mousePosition.value = hoverEvent.localPosition,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/sky_map.jpg',
-                  fit: BoxFit.contain,
-                ),
-                Obx(
-                  () {
-                    controller.mousePosition();
-                    return CanvasTouchDetector(
-                      builder: (context) => CustomPaint(
-                        painter: SkyMapConstellationPainter(
-                          context: context,
-                          revealConstellation: revealConstellation,
-                          animationController: controller.animationController!,
-                          onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
-                          mousePosition: controller.mousePosition(),
-                        ),
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            InteractiveViewer(
+              child: AspectRatio(
+                aspectRatio: 3660 / 2160,
+                child: MouseRegion(
+                  onHover: (hoverEvent) => controller.mousePosition.value = hoverEvent.localPosition,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/sky_map.jpg',
+                        fit: BoxFit.contain,
                       ),
-                    );
-                  },
+                      Obx(
+                        () {
+                          controller.mousePosition();
+                          return CanvasTouchDetector(
+                            builder: (context) => CustomPaint(
+                              painter: SkyMapConstellationPainter(
+                                context: context,
+                                revealConstellation: revealConstellation,
+                                animationController: controller.animationController!,
+                                onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
+                                mousePosition: controller.mousePosition(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Text(
+                  'Use scroll to zoom and RMB to pan',
+                  style: Theme.of(context).textTheme.caption,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

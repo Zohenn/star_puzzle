@@ -17,6 +17,9 @@ import 'package:star_puzzle/utils/utils.dart';
 import 'package:star_puzzle/views/constellation_puzzle/background_image_renderer.dart';
 
 import 'package:star_puzzle/models/constellation.dart';
+import 'package:star_puzzle/widgets/conditional_builder.dart';
+import 'package:star_puzzle/widgets/custom_layout_builder.dart';
+import 'package:star_puzzle/widgets/row_or_column.dart';
 import 'package:touchable/touchable.dart';
 
 class _ConstellationPuzzleController extends GetxController with GetTickerProviderStateMixin {
@@ -72,6 +75,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   }
 
   void startAnimation() {
+    Get.find<BaseService>().solvingState.value = SolvingState.animating;
     constellationAnimation.stars.first.shouldFill = true;
     ticker = Ticker((elapsed) {
       // constellationAnimation.skipForward();
@@ -83,7 +87,6 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       }
     });
     ticker!.start();
-    Get.find<BaseService>().solvingState.value = SolvingState.animating;
   }
 
   void onMove() {
@@ -117,6 +120,14 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       selectedStarAnimationController!.repeat();
     } else {
       selectedStarAnimationController!.reset();
+    }
+
+    if (Get.size.width < 700) {
+      Get.bottomSheet(
+        SelectedStarBottomSheet(selectedStar: selectedStar()),
+        persistent: false,
+        enableDrag: false,
+      ).then((_) => selectedStar.value = null);
     }
   }
 
@@ -220,199 +231,378 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
             padding: EdgeInsets.only(
               bottom: constellationIconBarHeight,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Obx(
-                      () => AnimatedSwitcher(
-                        duration: kThemeChangeDuration,
-                        switchInCurve: Curves.easeInOut,
-                        switchOutCurve: Curves.easeInOut,
-                        child: baseService.solvingState() == SolvingState.none
-                            ? Obx(
-                                () => Opacity(
-                                  opacity: constellation.solved() ? 1 : 0,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('FEWEST MOVES', style: Theme.of(context).textTheme.caption),
-                                      Obx(
-                                        () => Text(
-                                          !constellation.solved()
-                                              ? 'unavailable'
-                                              : constellation.bestMoves().toString(),
-                                          style: GoogleFonts.poppins(),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text('BEST TIME', style: Theme.of(context).textTheme.caption),
-                                      Obx(
-                                        () => Text(
-                                          !constellation.solved()
-                                              ? 'unavailable'
-                                              : formatSeconds(constellation.bestTime()!).toString(),
-                                          style: GoogleFonts.poppins(),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Obx(
-                                () => AnimatedOpacity(
-                                  opacity: baseService.solvingState() == SolvingState.animating ? 0 : 1,
-                                  duration: kThemeChangeDuration,
-                                  curve: Curves.easeInOut,
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(minWidth: 94),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('MOVES', style: Theme.of(context).textTheme.caption),
-                                        Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
-                                        const SizedBox(height: 16),
-                                        Text('TIME', style: Theme.of(context).textTheme.caption),
-                                        Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
-                                        const SizedBox(height: 16),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+            child: CustomLayoutBuilder(
+              builder: (isSmall) => ConditionalBuilder(
+                condition: isSmall,
+                ifTrue: () => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ConstellationSection(constellation: constellation),
+                      SizedBox(height: 48.0),
+                      ConstellationScoreSection(constellation: constellation),
+                      SizedBox(height: 24.0),
+                      StarInfoSection(constellation: constellation),
+                    ],
+                  ),
+                ),
+                ifFalse: () => Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: ConstellationScoreSection(constellation: constellation),
+                      ),
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                        child: ConstellationSection(constellation: constellation),
+                      ),
+                    ),
+                    Expanded(
+                      child: StarInfoSection(constellation: constellation),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ConstellationScoreSection extends StatelessWidget {
+  const ConstellationScoreSection({
+    Key? key,
+    required this.constellation,
+  }) : super(key: key);
+
+  final ConstellationMeta constellation;
+
+  BaseService get baseService => Get.find<BaseService>();
+
+  _ConstellationPuzzleController get controller =>
+      Get.find<_ConstellationPuzzleController>(tag: constellation.constellation.name);
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => AnimatedSwitcher(
+        duration: kThemeChangeDuration,
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        child: baseService.solvingState() == SolvingState.none
+            ? Obx(
+                () => Opacity(
+                  opacity: constellation.solved() ? 1 : 0,
+                  child: CustomLayoutBuilder(
+                    builder: (isSmall) => RowOrColumn(
+                      isRow: isSmall,
+                      children: [
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('FEWEST MOVES', style: Theme.of(context).textTheme.caption),
+                            Obx(
+                              () => Text(
+                                !constellation.solved() ? 'unavailable' : constellation.bestMoves().toString(),
+                                style: GoogleFonts.poppins(),
                               ),
-                        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                          return Stack(
-                            alignment: Alignment.center,
-                            clipBehavior: Clip.none,
-                            fit: StackFit.loose,
-                            children: <Widget>[
-                              ...previousChildren,
-                              if (currentChild != null) currentChild,
-                            ],
-                          );
-                        },
+                            ),
+                          ],
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('BEST TIME', style: Theme.of(context).textTheme.caption),
+                            Obx(
+                              () => Text(
+                                !constellation.solved()
+                                    ? 'unavailable'
+                                    : formatSeconds(constellation.bestTime()!).toString(),
+                                style: GoogleFonts.poppins(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      rowLayoutBuilder: (children) => Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (var child in children) ...[
+                            child,
+                            if (child != children.last) const SizedBox(width: 48.0),
+                          ],
+                        ],
+                      ),
+                      columnLayoutBuilder: (children) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var child in children) ...[
+                            child,
+                            const SizedBox(height: 16),
+                          ],
+                        ],
                       ),
                     ),
                   ),
                 ),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Obx(
-                          () => ConstellationName(
-                            constellation: constellation,
-                            animate: controller.showName(),
+              )
+            : Obx(
+                () => AnimatedOpacity(
+                  opacity: baseService.solvingState() == SolvingState.animating ? 0 : 1,
+                  duration: kThemeChangeDuration,
+                  curve: Curves.easeInOut,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 94),
+                    child: CustomLayoutBuilder(
+                      builder: (isSmall) => RowOrColumn(
+                        isRow: isSmall,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('MOVES', style: Theme.of(context).textTheme.caption),
+                              Obx(() => Text(controller.moves().toString(), style: GoogleFonts.poppins())),
+                            ],
                           ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('TIME', style: Theme.of(context).textTheme.caption),
+                              Obx(() => Text(controller.elapsedTime, style: GoogleFonts.poppins())),
+                            ],
+                          ),
+                        ],
+                        rowLayoutBuilder: (children) => Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (var child in children) ...[
+                              child,
+                              if (child != children.last) const SizedBox(width: 48.0),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox.fromSize(
-                          key: controller.gridKey,
-                          size: gridSize,
-                          child: Obx(
-                            () => AnimatedSwitcher(
-                              duration: kThemeChangeDuration,
-                              child: baseService.solvingState() == SolvingState.solving
-                                  ? ConstrainedBox(
-                                      constraints: BoxConstraints.tight(gridSize),
-                                      child: Obx(
-                                        () => ConstellationPuzzleGrid(
-                                          puzzle: controller.puzzle(),
-                                          constellation: constellation.constellation,
-                                          onShuffleEnd: controller.startTimer,
-                                          onMove: controller.onMove,
-                                          onComplete: controller.onComplete,
-                                        ),
-                                      ),
-                                    )
-                                  : Obx(
-                                      () {
-                                        controller.previousTime();
-                                        controller.selectedStar();
-                                        constellation.solved();
-                                        baseService.solvingState();
-                                        return CanvasTouchDetector(
-                                          builder: (context) => CustomPaint(
-                                            painter: ConstellationAnimationPainter(
-                                              context,
-                                              constellation.constellationAnimation,
-                                              1,
-                                              starSize: constellation.constellation.starSize,
-                                              onStarTap: controller.onStarTap,
-                                              selectedStar: controller.selectedStar(),
-                                              selectedStarAnimationController:
-                                                  controller.selectedStarAnimationController,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                              layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                                return Stack(
-                                  alignment: Alignment.center,
-                                  fit: StackFit.passthrough,
-                                  children: <Widget>[
-                                    ...previousChildren,
-                                    if (currentChild != null) currentChild,
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
+                        columnLayoutBuilder: (children) => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (var child in children) ...[
+                              child,
+                              const SizedBox(height: 16),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        TextButtonTheme(
-                          data: TextButtonThemeData(
-                            style: Theme.of(context).textButtonTheme.style!.copyWith(
-                                  textStyle: MaterialStateProperty.all(
-                                      Theme.of(context).textTheme.button!.copyWith(fontSize: 18)),
-                                  padding: MaterialStateProperty.all(
-                                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
-                                ),
-                          ),
-                          child: Obx(
-                            () => AnimatedSwitcher(
-                                duration: kThemeChangeDuration,
-                                switchInCurve: Curves.easeInOut,
-                                switchOutCurve: Curves.easeInOut,
-                                child: getStateButton(controller, baseService.solvingState())),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Obx(
-                    () => AnimatedSwitcher(
-                      duration: kThemeChangeDuration,
-                      switchInCurve: Curves.easeInOut,
-                      switchOutCurve: Curves.easeInOut,
-                      child: constellation.solved() && baseService.solvingState() == SolvingState.none
-                          ? Obx(() => StarInfo(star: controller.selectedStar()))
-                          : const SizedBox.shrink(),
-                      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                        return Stack(
-                          alignment: Alignment.topLeft,
-                          children: <Widget>[
-                            ...previousChildren,
-                            if (currentChild != null) currentChild,
-                          ],
+              ),
+        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+          return Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            fit: StackFit.loose,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ConstellationSection extends StatelessWidget with SizeMixin {
+  const ConstellationSection({
+    Key? key,
+    required this.constellation,
+  }) : super(key: key);
+
+  final ConstellationMeta constellation;
+
+  _ConstellationPuzzleController get controller =>
+      Get.find<_ConstellationPuzzleController>(tag: constellation.constellation.name);
+
+  Widget getStateButton(_ConstellationPuzzleController controller, SolvingState solvingState) {
+    switch (solvingState) {
+      case SolvingState.none:
+        return TextButton(
+          key: const ValueKey('solve'),
+          onPressed: () {
+            controller.initPuzzle();
+            baseService.solvingState.value = SolvingState.solving;
+          },
+          child: Text(constellation.solved() ? 'Solve again' : 'Solve'),
+        );
+      case SolvingState.solving:
+        return TextButton(
+          key: const ValueKey('back'),
+          onPressed: () {
+            controller.cancelPuzzle();
+            baseService.solvingState.value = SolvingState.none;
+          },
+          child: const Text('Go back'),
+        );
+      case SolvingState.animating:
+        return const Opacity(
+          opacity: 0,
+          child: TextButton(
+            onPressed: null,
+            child: Text(''),
+          ),
+        );
+      case SolvingState.done:
+        return TextButton(
+          key: const ValueKey('ok'),
+          onPressed: () async {
+            if (controller.firstSolve!) {
+              await Get.dialog(SkyMap(revealConstellation: constellation), barrierDismissible: false);
+            }
+            baseService.solvingState.value = SolvingState.none;
+          },
+          child: const Text('Nice!'),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Obx(
+          () => ConstellationName(
+            constellation: constellation,
+            animate: controller.showName(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox.fromSize(
+          key: controller.gridKey,
+          size: gridSize,
+          child: Obx(
+            () => AnimatedSwitcher(
+              duration: kThemeChangeDuration,
+              child: baseService.solvingState() == SolvingState.solving
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints.tight(gridSize),
+                      child: Obx(
+                        () => ConstellationPuzzleGrid(
+                          puzzle: controller.puzzle(),
+                          constellation: constellation.constellation,
+                          onShuffleEnd: controller.startTimer,
+                          onMove: controller.onMove,
+                          onComplete: controller.onComplete,
+                        ),
+                      ),
+                    )
+                  : Obx(
+                      () {
+                        controller.previousTime();
+                        controller.selectedStar();
+                        constellation.solved();
+                        baseService.solvingState();
+                        return CanvasTouchDetector(
+                          builder: (context) => CustomPaint(
+                            painter: ConstellationAnimationPainter(
+                              context,
+                              constellation.constellationAnimation,
+                              1,
+                              starSize: constellation.constellation.starSize,
+                              onStarTap: controller.onStarTap,
+                              selectedStar: controller.selectedStar(),
+                              selectedStarAnimationController: controller.selectedStarAnimationController,
+                            ),
+                          ),
                         );
                       },
                     ),
-                  ),
-                ),
-              ],
+              layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                return Stack(
+                  alignment: Alignment.center,
+                  fit: StackFit.passthrough,
+                  children: <Widget>[
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
             ),
           ),
-        ],
+        ),
+        const SizedBox(height: 16),
+        TextButtonTheme(
+          data: TextButtonThemeData(
+            style: Theme.of(context).textButtonTheme.style!.copyWith(
+                  textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.button!.copyWith(fontSize: 18)),
+                  padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 8, horizontal: 16)),
+                ),
+          ),
+          child: Obx(
+            () => AnimatedSwitcher(
+                duration: kThemeChangeDuration,
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                child: getStateButton(controller, baseService.solvingState())),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class StarInfoSection extends StatelessWidget {
+  const StarInfoSection({
+    Key? key,
+    required this.constellation,
+  }) : super(key: key);
+
+  final ConstellationMeta constellation;
+
+  BaseService get baseService => Get.find<BaseService>();
+
+  _ConstellationPuzzleController get controller =>
+      Get.find<_ConstellationPuzzleController>(tag: constellation.constellation.name);
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => AnimatedOpacity(
+        duration: kThemeChangeDuration,
+        opacity: constellation.solved() && baseService.solvingState() == SolvingState.none ? 1 : 0,
+        curve: Curves.easeInOut,
+        child: Obx(() => StarInfo(star: controller.selectedStar())),
+      ),
+    );
+  }
+}
+
+class SelectedStarBottomSheet extends StatelessWidget {
+  const SelectedStarBottomSheet({
+    Key? key,
+    required this.selectedStar,
+  }) : super(key: key);
+
+  final Star? selectedStar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: Theme.of(context).backgroundColor,
+      child: StarInfo(
+        star: selectedStar,
+        inBottomSheet: true,
       ),
     );
   }

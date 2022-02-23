@@ -21,7 +21,7 @@ class BaseService extends GetxService {
 
   Size get tileSize => gridSize / size.toDouble();
 
-  final constellationIconSize = const Size.square(96);
+  Size get constellationIconSize => Size.square(Get.size.width < 700 ? 72 : 96);
   final constellationIconPadding = const EdgeInsets.symmetric(vertical: 24.0);
 
   @override
