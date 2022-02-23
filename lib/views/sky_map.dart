@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
@@ -5,10 +7,11 @@ import 'package:star_puzzle/widgets/theme_provider.dart';
 import 'package:touchable/touchable.dart';
 
 class _SkyMapController extends GetxController with GetTickerProviderStateMixin {
-  _SkyMapController(this.reveal);
+  _SkyMapController(this.revealConstellation);
 
-  final bool reveal;
+  final ConstellationMeta? revealConstellation;
   AnimationController? animationController;
+  TransformationController? transformationController;
   final mousePosition = Rxn<Offset>();
 
   @override
@@ -17,7 +20,7 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
 
     animationController = AnimationController(vsync: this, duration: 1.seconds);
 
-    if (reveal) {
+    if (revealConstellation != null) {
       animationController!.addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           Future.delayed(1.seconds, () {
@@ -30,6 +33,37 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
       Future.delayed(500.milliseconds, () {
         animate();
       });
+
+      if(Get.size.width <= 700){
+        const double scale = 2.5;
+        final width = (Get.size.width - 2 * 40);
+        final height = width / (3660 / 2160);
+        final boundaries = revealConstellation!.constellation.boundaries!;
+        double minX = 1, minY = 1;
+        double maxX = 0, maxY = 0;
+        for(var point in boundaries){
+          if(point.x < minX){
+            minX = point.x;
+          }else if(point.x > maxX){
+            maxX = point.x;
+          }
+
+          if(point.y < minY){
+            minY = point.y;
+          } else if(point.y > maxY){
+            maxY = point.y;
+          }
+        }
+        final boundaryWidth = (maxX - minX) * width;
+        final boundaryHeight = (maxY - minY) * height;
+        final offsetX = minX * width - (width / 2) / scale + boundaryWidth / 2;
+        final offsetY = minY * height - (height / 2) / scale + boundaryHeight / 2;
+        final translateX = -(max(0.0, min(offsetX * scale, width * scale - width)));
+        final translateY = -(max(0.0, min(offsetY * scale, height * scale - height)));
+        print('$width $height $translateX $translateY');
+        // print('${width * scale} ${height * scale} ${translateX * scale} ${translateY * scale}');
+        transformationController = TransformationController(Matrix4.diagonal3Values(scale, scale, 1)..setTranslationRaw(translateX, translateY, 0));
+      }
     }
   }
 
@@ -63,7 +97,7 @@ class SkyMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<_SkyMapController>(
-      init: _SkyMapController(revealConstellation != null),
+      init: _SkyMapController(revealConstellation),
       builder: (controller) => Dialog(
         clipBehavior: Clip.hardEdge,
         backgroundColor: Colors.black,
@@ -72,6 +106,7 @@ class SkyMap extends StatelessWidget {
           fit: StackFit.passthrough,
           children: [
             InteractiveViewer(
+              transformationController: controller.transformationController,
               child: AspectRatio(
                 aspectRatio: 3660 / 2160,
                 child: MouseRegion(
