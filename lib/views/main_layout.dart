@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/views/constellation_puzzle/constellation_puzzle.dart';
@@ -11,6 +12,7 @@ import 'package:star_puzzle/widgets/theme_provider.dart';
 
 class _MainLayoutController extends GetxController {
   final selectedConstellation = Rxn<ConstellationMeta>();
+  final constellationScrollController = ScrollController();
 
   @override
   void onInit() {
@@ -102,77 +104,88 @@ class MainLayout extends StatelessWidget with SizeMixin {
                           ),
                         ),
                         Expanded(
-                          child: Center(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              padding: constellationIconPadding,
-                              child: Row(
-                                children: [
-                                  for (var constellation in constellations) ...[
-                                    AnimatedContainer(
-                                      duration: kThemeChangeDuration,
-                                      curve: Curves.easeInOut,
-                                      transform: Matrix4.translationValues(
-                                          0, controller.selectedConstellation() == constellation ? -8 : 0, 0),
-                                      child: Card(
-                                        clipBehavior: Clip.hardEdge,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        margin: EdgeInsets.zero,
-                                        color: Colors.transparent,
-                                        elevation: controller.selectedConstellation() == constellation ? 4 : 0,
-                                        child: Stack(
-                                          children: [
-                                            SizedBox.fromSize(
-                                              size: constellationIconSize,
-                                              child: ColoredBox(
-                                                color: Theme.of(context).backgroundColor,
-                                                child: RepaintBoundary(
-                                                  child: CustomPaint(
-                                                    isComplex: true,
-                                                    painter: ConstellationAnimationPainter(
-                                                        context, constellation.constellationAnimation, 0.3,
-                                                        useCircles: true),
+                          child: Listener(
+                            onPointerSignal: (event) {
+                              if (event is PointerScrollEvent) {
+                                final offset = event.scrollDelta.dy;
+                                controller.constellationScrollController.jumpTo(
+                                  controller.constellationScrollController.offset + constellationIconSize.width / 6 * offset.sign,
+                                );
+                              }
+                            },
+                            child: Center(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                padding: constellationIconPadding,
+                                controller: controller.constellationScrollController,
+                                child: Row(
+                                  children: [
+                                    for (var constellation in constellations) ...[
+                                      AnimatedContainer(
+                                        duration: kThemeChangeDuration,
+                                        curve: Curves.easeInOut,
+                                        transform: Matrix4.translationValues(
+                                            0, controller.selectedConstellation() == constellation ? -8 : 0, 0),
+                                        child: Card(
+                                          clipBehavior: Clip.hardEdge,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          margin: EdgeInsets.zero,
+                                          color: Colors.transparent,
+                                          elevation: controller.selectedConstellation() == constellation ? 4 : 0,
+                                          child: Stack(
+                                            children: [
+                                              SizedBox.fromSize(
+                                                size: constellationIconSize,
+                                                child: ColoredBox(
+                                                  color: Theme.of(context).backgroundColor,
+                                                  child: RepaintBoundary(
+                                                    child: CustomPaint(
+                                                      isComplex: true,
+                                                      painter: ConstellationAnimationPainter(
+                                                          context, constellation.constellationAnimation, 0.3,
+                                                          useCircles: true),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // child: Obx(
+                                                //   () => Image.memory(
+                                                //     constellation.imageBytes()!,
+                                                //     fit: BoxFit.cover,
+                                                //   ),
+                                                // ),
+                                              ),
+                                              Positioned.fill(
+                                                child: AnimatedContainer(
+                                                  duration: kThemeChangeDuration,
+                                                  color: controller.selectedConstellation() == constellation
+                                                      ? Colors.transparent
+                                                      : Colors.white.withOpacity(0.1),
+                                                ),
+                                              ),
+                                              Positioned.fill(
+                                                child: Material(
+                                                  type: MaterialType.transparency,
+                                                  child: Builder(
+                                                    builder: (context) => InkWell(
+                                                      onTap: () {
+                                                        controller.selectedConstellation.value = constellation;
+                                                        DefaultTabController.of(context)!
+                                                            .animateTo(constellations.indexOf(constellation));
+                                                      },
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                              // child: Obx(
-                                              //   () => Image.memory(
-                                              //     constellation.imageBytes()!,
-                                              //     fit: BoxFit.cover,
-                                              //   ),
-                                              // ),
-                                            ),
-                                            Positioned.fill(
-                                              child: AnimatedContainer(
-                                                duration: kThemeChangeDuration,
-                                                color: controller.selectedConstellation() == constellation
-                                                    ? Colors.transparent
-                                                    : Colors.white.withOpacity(0.1),
-                                              ),
-                                            ),
-                                            Positioned.fill(
-                                              child: Material(
-                                                type: MaterialType.transparency,
-                                                child: Builder(
-                                                  builder: (context) => InkWell(
-                                                    onTap: () {
-                                                      controller.selectedConstellation.value = constellation;
-                                                      DefaultTabController.of(context)!
-                                                          .animateTo(constellations.indexOf(constellation));
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    if (constellation != constellations.last) const SizedBox(width: 16),
+                                      if (constellation != constellations.last) const SizedBox(width: 16),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),

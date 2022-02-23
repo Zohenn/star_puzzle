@@ -77,7 +77,7 @@ class BaseService extends GetxService {
       constellation.solved.value = false;
       constellation.bestMoves.value = null;
       constellation.bestTime.value = null;
-      constellation.constellationAnimation.skipForward();
+      constellation.constellationAnimation.reset();
     }
     _box.clear();
   }

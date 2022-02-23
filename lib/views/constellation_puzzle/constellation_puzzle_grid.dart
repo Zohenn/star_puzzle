@@ -29,7 +29,7 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
       );
       final animationController = AnimationController(vsync: this, duration: _moveAnimationDuration);
       animationController.addStatusListener(((status) {
-        if (status == AnimationStatus.completed && puzzle.complete) {
+        if (status == AnimationStatus.completed && puzzle.complete && !complete()) {
           complete.value = true;
           onComplete();
         }

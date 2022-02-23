@@ -23,7 +23,6 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   _ConstellationPuzzleController(this.constellation);
 
   final ConstellationMeta constellation;
-  final isSolving = false.obs;
   final puzzle = Rxn<Puzzle>();
   final moves = 0.obs;
   final elapsedSeconds = 0.obs;
@@ -103,7 +102,6 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       constellation.bestTime.value = elapsedSeconds();
     }
     Get.find<BaseService>().saveConstellationProgress(constellation);
-    isSolving.value = false;
     if (firstSolve!) {
       startAnimation();
     } else {
@@ -158,7 +156,6 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
           key: const ValueKey('solve'),
           onPressed: () {
             controller.initPuzzle();
-            controller.isSolving.value = true;
             baseService.solvingState.value = SolvingState.solving;
           },
           child: Text(constellation.solved() ? 'Solve again' : 'Solve'),
@@ -168,7 +165,6 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
           key: const ValueKey('back'),
           onPressed: () {
             controller.cancelPuzzle();
-            controller.isSolving.value = false;
             baseService.solvingState.value = SolvingState.none;
           },
           child: const Text('Go back'),
@@ -322,7 +318,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
                           child: Obx(
                             () => AnimatedSwitcher(
                               duration: kThemeChangeDuration,
-                              child: controller.isSolving()
+                              child: baseService.solvingState() == SolvingState.solving
                                   ? ConstrainedBox(
                                       constraints: BoxConstraints.tight(gridSize),
                                       child: Obx(
