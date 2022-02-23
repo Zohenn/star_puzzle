@@ -115,12 +115,8 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
     selectedStar.value = selectedStar() == star ? null : star;
     if (selectedStar.value != null) {
       selectedStarAnimationController ??= AnimationController(vsync: this, duration: const Duration(seconds: 1));
-      selectedStarAnimationController!.forward(from: 0);
-      selectedStarAnimationController!.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          selectedStarAnimationController!.forward(from: 0);
-        }
-      });
+      selectedStarAnimationController!.reset();
+      selectedStarAnimationController!.repeat();
     } else {
       selectedStarAnimationController!.reset();
     }
@@ -165,7 +161,7 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
             controller.isSolving.value = true;
             baseService.solvingState.value = SolvingState.solving;
           },
-          child: const Text('Solve'),
+          child: Text(constellation.solved() ? 'Solve again' : 'Solve'),
         );
       case SolvingState.solving:
         return TextButton(
