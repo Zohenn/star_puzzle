@@ -486,6 +486,24 @@ class ConstellationSection extends StatelessWidget with SizeMixin {
             animate: controller.showName(),
           ),
         ),
+        Obx(
+          () => AnimatedOpacity(
+            opacity: constellation.solved() && baseService.solvingState() == SolvingState.none ? 1 : 0,
+            duration: kThemeChangeDuration,
+            child: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.caption,
+                children: [
+                  TextSpan(
+                    text: constellation.constellation.stars.length.toString(),
+                    style: GoogleFonts.poppins(textStyle: Theme.of(context).textTheme.caption),
+                  ),
+                  const TextSpan(text: ' stars'),
+                ],
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         SizedBox.fromSize(
           key: controller.gridKey,
