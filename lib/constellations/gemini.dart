@@ -5,7 +5,7 @@ import 'package:star_puzzle/models/constellation.dart';
 final gemini = Constellation(
   name: 'Gemini',
   skyFileName: 'gemini_sky.jpg',
-  skyBoxOffset: const Offset(1545, 716),
+  skyBoxOffset: const Offset(1545, 712),
   skyBoxSize: const Size.square(550),
   backgroundColor: const Color(0xff001500),
   stars: [

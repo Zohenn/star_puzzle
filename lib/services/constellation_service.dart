@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/constellations/gemini.dart';
+import 'package:star_puzzle/constellations/hercules.dart';
 import 'package:star_puzzle/models/constellation.dart';
 import 'package:star_puzzle/constellations/leo.dart';
 import 'package:star_puzzle/constellations/sagittarius.dart';
@@ -42,7 +43,7 @@ class ConstellationMeta {
 class ConstellationService extends GetxService {
   ConstellationService();
 
-  final List<Constellation> _constellations = [leo, sagittarius, gemini];
+  final List<Constellation> _constellations = [leo, sagittarius, gemini, hercules];
   final List<ConstellationMeta> constellations = [];
 
   @override
