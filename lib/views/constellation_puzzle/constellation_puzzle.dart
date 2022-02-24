@@ -46,18 +46,18 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
   String get elapsedTime => formatSeconds(elapsedSeconds());
 
   void initPuzzle() {
-    // puzzle.value = Puzzle.generate(3);
-    var list = [1, 2, 3, 4, 5, 6, 7, 9, 8];
-    TilePosition numberToPosition(int i) {
-      return TilePosition(i % 3, (i ~/ 3).toDouble());
-    }
-
-    var tiles = [
-      for (var i = 0; i < 9; i++) Tile(numberToPosition(list[i] - 1), numberToPosition(i), list[i] == 9),
-    ];
-    puzzle.value = Puzzle(
-      tiles,
-    );
+    puzzle.value = Puzzle.generate(3);
+    // var list = [1, 2, 3, 4, 5, 6, 7, 9, 8];
+    // TilePosition numberToPosition(int i) {
+    //   return TilePosition(i % 3, (i ~/ 3).toDouble());
+    // }
+    //
+    // var tiles = [
+    //   for (var i = 0; i < 9; i++) Tile(numberToPosition(list[i] - 1), numberToPosition(i), list[i] == 9),
+    // ];
+    // puzzle.value = Puzzle(
+    //   tiles,
+    // );
     moves.value = 0;
     elapsedSeconds.value = 0;
   }
@@ -239,9 +239,9 @@ class ConstellationPuzzle extends StatelessWidget with SizeMixin {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ConstellationSection(constellation: constellation),
-                      SizedBox(height: 48.0),
+                      const SizedBox(height: 48.0),
                       ConstellationScoreSection(constellation: constellation),
-                      SizedBox(height: 24.0),
+                      const SizedBox(height: 24.0),
                       StarInfoSection(constellation: constellation),
                     ],
                   ),
