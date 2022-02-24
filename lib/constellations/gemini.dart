@@ -7,7 +7,7 @@ final gemini = Constellation(
   skyFileName: 'gemini_sky.jpg',
   skyBoxOffset: const Offset(1545, 716),
   skyBoxSize: const Size.square(550),
-  backgroundColor: Color(0xffffffff),
+  backgroundColor: const Color(0xff001500),
   stars: [
     Star(pos: Position(0.3571465015411377, 0.14882448315620422), name: 'Pollux', magnitude: 1.15, distance: 33.78),
     Star(pos: Position(0.3806761105855306, 0.23619856437047324), name: 'υ Gem', magnitude: 4.05, distance: 264.09),

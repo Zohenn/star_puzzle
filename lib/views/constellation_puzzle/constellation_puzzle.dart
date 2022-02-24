@@ -122,7 +122,7 @@ class _ConstellationPuzzleController extends GetxController with GetTickerProvid
       selectedStarAnimationController!.reset();
     }
 
-    if (Get.size.width < 700) {
+    if (Get.size.width < smallBreakpoint) {
       Get.bottomSheet(
         SelectedStarBottomSheet(selectedStar: selectedStar()),
         persistent: false,

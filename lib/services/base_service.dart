@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:star_puzzle/models/constellation_progress.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/utils/utils.dart';
 
 enum SolvingState {
   none,
@@ -21,7 +22,7 @@ class BaseService extends GetxService {
 
   Size get tileSize => gridSize / size.toDouble();
 
-  Size get constellationIconSize => Size.square(Get.size.width < 700 ? 72 : 96);
+  Size get constellationIconSize => Size.square(Get.size.width < smallBreakpoint ? 72 : 96);
   final constellationIconPadding = const EdgeInsets.symmetric(vertical: 24.0);
 
   @override

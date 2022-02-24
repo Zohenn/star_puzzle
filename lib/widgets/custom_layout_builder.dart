@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:star_puzzle/utils/utils.dart';
 
 class CustomLayoutBuilder extends StatelessWidget {
   const CustomLayoutBuilder({
@@ -12,7 +13,7 @@ class CustomLayoutBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final screenWidth = MediaQuery.of(context).size.width;
-      return builder(screenWidth < 700);
+      return builder(screenWidth < smallBreakpoint);
     });
   }
 }

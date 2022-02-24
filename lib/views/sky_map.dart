@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_puzzle/services/constellation_service.dart';
+import 'package:star_puzzle/utils/utils.dart';
 import 'package:star_puzzle/widgets/theme_provider.dart';
 import 'package:touchable/touchable.dart';
 
@@ -34,7 +35,7 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
         animate();
       });
 
-      if(Get.size.width <= 700){
+      if(Get.size.width < smallBreakpoint){
         const double scale = 2.5;
         final width = (Get.size.width - 2 * 40);
         final height = width / (3660 / 2160);
@@ -60,8 +61,6 @@ class _SkyMapController extends GetxController with GetTickerProviderStateMixin 
         final offsetY = minY * height - (height / 2) / scale + boundaryHeight / 2;
         final translateX = -(max(0.0, min(offsetX * scale, width * scale - width)));
         final translateY = -(max(0.0, min(offsetY * scale, height * scale - height)));
-        print('$width $height $translateX $translateY');
-        // print('${width * scale} ${height * scale} ${translateX * scale} ${translateY * scale}');
         transformationController = TransformationController(Matrix4.diagonal3Values(scale, scale, 1)..setTranslationRaw(translateX, translateY, 0));
       }
     }
@@ -102,55 +101,40 @@ class SkyMap extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            InteractiveViewer(
-              transformationController: controller.transformationController,
-              child: AspectRatio(
-                aspectRatio: 3660 / 2160,
-                child: MouseRegion(
-                  onHover: (hoverEvent) => controller.mousePosition.value = hoverEvent.localPosition,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.asset(
-                        'assets/sky_map.jpg',
-                        fit: BoxFit.contain,
-                      ),
-                      Obx(
-                        () {
-                          controller.mousePosition();
-                          return CanvasTouchDetector(
-                            builder: (context) => CustomPaint(
-                              painter: SkyMapConstellationPainter(
-                                context: context,
-                                revealConstellation: revealConstellation,
-                                animationController: controller.animationController!,
-                                onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
-                                mousePosition: controller.mousePosition(),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+        child: InteractiveViewer(
+          transformationController: controller.transformationController,
+          maxScale: 4,
+          child: AspectRatio(
+            aspectRatio: 3660 / 2160,
+            child: MouseRegion(
+              onHover: (hoverEvent) => controller.mousePosition.value = hoverEvent.localPosition,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/sky_map.jpg',
+                    fit: BoxFit.contain,
                   ),
-                ),
+                  Obx(
+                    () {
+                      controller.mousePosition();
+                      return CanvasTouchDetector(
+                        builder: (context) => CustomPaint(
+                          painter: SkyMapConstellationPainter(
+                            context: context,
+                            revealConstellation: revealConstellation,
+                            animationController: controller.animationController!,
+                            onConstellationTap: openConstellationOnTap ? _onConstellationTap : null,
+                            mousePosition: controller.mousePosition(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Text(
-                  'Use scroll to zoom and RMB to pan',
-                  style: Theme.of(context).textTheme.caption,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
