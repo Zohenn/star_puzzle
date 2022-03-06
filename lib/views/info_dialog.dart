@@ -6,10 +6,16 @@ import 'package:star_puzzle/widgets/theme_provider.dart';
 
 const _licenseText = '''
 Night sky screenshots taken from Stellarium, licensed under GNU GPL.
-Special courtesy to Axel Mellinger for providing the Milky Way panorama.
+https://stellarium.org
 
 Background image for this dialog by Laney Smith.
+https://unsplash.com/photos/FwNUSwJDZIQ
 https://unsplash.com/@laney1smith
+
+Star path was modified from svg provided by SVG Repo, licensed under CC0 license.
+https://www.svgrepo.com/svg/27048/star
+
+Josefin Slab, Poppins and Raleway fonts are present within the app, all licensed under OFL license.
 ''';
 
 class InfoDialog extends StatelessWidget {
@@ -64,13 +70,13 @@ class InfoDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 24.0),
                 Text(
-                  'LICENSE INFORMATION',
+                  'CREDITS',
                   style: Theme.of(context).textTheme.caption!.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 12.0),
                 const SelectableText(_licenseText),
                 const SizedBox(height: 24.0),
-                // Text('Special thanks to my wonderful girlfriend.'),
+                const Text('Special thanks to my wonderful girlfriend.'),
               ],
             ),
           ),

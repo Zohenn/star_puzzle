@@ -33,17 +33,13 @@ class BaseService extends GetxService {
   }
 
   Future init() async {
-    final task = await Future.delayed(20.milliseconds, () async {
-      await Future.wait(
-        [
-          precacheImage(const AssetImage('assets/night_sky.jpg'), Get.context!),
-          precacheImage(const AssetImage('assets/sky_map.jpg'), Get.context!),
-          _openBox(),
-        ],
-      );
-    });
-
-    await task;
+    await Future.wait(
+      [
+        precacheImage(const AssetImage('assets/night_sky.jpg'), Get.context!),
+        precacheImage(const AssetImage('assets/sky_map.jpg'), Get.context!),
+        _openBox(),
+      ],
+    );
 
     final constellationService = Get.put(ConstellationService());
     _loadProgress();
@@ -56,9 +52,9 @@ class BaseService extends GetxService {
 
   void _loadProgress() {
     final constellationService = Get.find<ConstellationService>();
-    for(var constellation in constellationService.constellations){
+    for (var constellation in constellationService.constellations) {
       final constellationProgress = _box.get(constellation.constellation.name);
-      if(constellationProgress != null){
+      if (constellationProgress != null) {
         constellation.loadProgress(constellationProgress);
       }
     }
@@ -74,7 +70,7 @@ class BaseService extends GetxService {
 
   void resetProgress() {
     final constellationService = Get.find<ConstellationService>();
-    for(var constellation in constellationService.constellations){
+    for (var constellation in constellationService.constellations) {
       constellation.solved.value = false;
       constellation.bestMoves.value = null;
       constellation.bestTime.value = null;
@@ -88,5 +84,4 @@ class BaseService extends GetxService {
     _box.close();
     super.onClose();
   }
-
 }

@@ -54,7 +54,7 @@ class StarInfo extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                       children: [
                         TextSpan(text: distance, style: GoogleFonts.poppins()),
-                        TextSpan(text: ' ly'),
+                        const TextSpan(text: ' ly'),
                       ],
                     ),
                   ),

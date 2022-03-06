@@ -231,8 +231,8 @@ class TilePainter extends CustomPainter with SizeMixin {
     final mqData = MediaQuery.of(context);
     final pos = box.localToGlobal(Offset.zero);
     final tilePos = pos + Offset(x * tileSize.width, y * tileSize.height) + sizeToOffset(paddingSize / 2);
-    final gridSize = box.size * mqData.devicePixelRatio;
-    final scale = constellation.skyBoxSize.width / gridSize.width;
+    final _gridSize = box.size * mqData.devicePixelRatio;
+    final scale = constellation.skyBoxSize.width / _gridSize.width;
     final boxFitOffset = constellation.skyBoxOffset - pos * mqData.devicePixelRatio * scale;
     final tileImageSize = (size * mqData.devicePixelRatio * scale);
     final tileImageOffset = (boxFitOffset + (tilePos * mqData.devicePixelRatio * scale));

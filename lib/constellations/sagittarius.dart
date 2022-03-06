@@ -5,7 +5,7 @@ import 'package:star_puzzle/models/constellation.dart';
 final sagittarius = Constellation(
   name: 'Sagittarius',
   skyFileName: 'sagittarius_sky.jpg',
-  skyBoxOffset: const Offset(1550, 712),
+  skyBoxOffset: const Offset(1550, 742),
   skyBoxSize: const Size.square(550),
   backgroundColor: const Color(0xff1e0c00),
   stars: [

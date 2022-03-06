@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-final cornsilk = Color(0xfffff8dc);
-final _backgroundColor = Color(0xff081229);
+const cornsilk = Color(0xfffff8dc);
+const _backgroundColor = Color(0xff081229);
 
 final _textTheme = GoogleFonts.ralewayTextTheme(Typography.material2018().white.apply(bodyColor: cornsilk));
 
@@ -29,7 +29,7 @@ class ThemeProvider extends StatelessWidget {
           elevation: 4,
           clipBehavior: Clip.hardEdge,
         ),
-        buttonTheme: ButtonThemeData(
+        buttonTheme: const ButtonThemeData(
           padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 12.0),
           buttonColor: cornsilk,
         ),

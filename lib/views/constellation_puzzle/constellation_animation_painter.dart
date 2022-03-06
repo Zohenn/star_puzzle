@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:star_puzzle/models/constellation.dart';
 import 'package:star_puzzle/utils/star_path.dart';
+import 'package:star_puzzle/utils/utils.dart';
 import 'package:touchable/touchable.dart';
 
 class ConstellationAnimationPainter extends CustomPainter {
@@ -29,8 +30,6 @@ class ConstellationAnimationPainter extends CustomPainter {
   static const _baseStarPathSize = Size(12, 12);
 
   Size get starPathSize => (starSize != null ? Size.square(starSize!) : _baseStarPathSize) * preScale;
-
-  static Offset sizeToOffset(Size size) => Offset(size.width, size.height);
 
   @override
   void paint(Canvas _canvas, Size size) {

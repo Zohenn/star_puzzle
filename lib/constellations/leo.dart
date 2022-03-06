@@ -5,7 +5,7 @@ import 'package:star_puzzle/models/constellation.dart';
 final leo = Constellation(
   name: 'Leo',
   skyFileName: 'leo_sky.jpg',
-  skyBoxOffset: const Offset(1505, 712),
+  skyBoxOffset: const Offset(1505, 703),
   skyBoxSize: const Size.square(550),
   backgroundColor: const Color(0xff010221),
   stars: [
