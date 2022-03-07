@@ -6,6 +6,8 @@ const _backgroundColor = Color(0xff081229);
 
 final _textTheme = GoogleFonts.ralewayTextTheme(Typography.material2018().white.apply(bodyColor: cornsilk));
 
+/// Putting theme in a separate file would be the best, but then its changes are not reflected on hot reload.
+/// This widget solves that problem.
 class ThemeProvider extends StatelessWidget {
   const ThemeProvider({
     Key? key,

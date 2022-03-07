@@ -69,7 +69,7 @@ class _StarLoaderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final starPaint = Paint()..color = const Color(0xffffffff);
+    final starPaint = Paint()..color = Colors.white;
     final stepWidth = 1 / (noStars * 2);
     final step = animation.value / stepWidth;
 
@@ -98,7 +98,7 @@ class _StarLoaderPainter extends CustomPainter {
         lineFill = lineStep - lineStep.toInt();
       }
       final linePaint = Paint()
-        ..color = const Color(0x20ffffff)
+        ..color = Colors.white.withOpacity(0.12)
         ..strokeWidth = starSize / 5;
       if (reverse) {
         canvas.drawLine(nextStarShift + sizeOffset, nextStarShift + sizeOffset + (shift + sizeOffset - (nextStarShift + sizeOffset)) * (1 - lineFill), linePaint);
