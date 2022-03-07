@@ -57,6 +57,8 @@ class _ConstellationPuzzleGridController extends GetxController with GetTickerPr
   final animationControllers = <int, AnimationController>{};
   final animations = <int, Animation<TilePosition>>{};
   final containerKey = GlobalKey();
+  /// For some reason status listener sometimes gets called more than once on animation end,
+  /// hence this variable is needed.
   final complete = false.obs;
 
   Animation<TilePosition> animatePosition(TilePositionTween tween, AnimationController controller) {

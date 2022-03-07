@@ -102,6 +102,7 @@ class Tile {
   }
 }
 
+/// Parts of this class were taken from sample code provided by Very Good Ventures
 class Puzzle {
   Puzzle(this.tiles);
 

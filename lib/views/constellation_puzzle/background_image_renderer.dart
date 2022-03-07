@@ -47,6 +47,7 @@ class BackgroundImageRenderer extends StatelessWidget {
   }
 }
 
+/// This painter ensures that the sky background aligns correctly with constellation on the puzzle
 class ConstellationSkyBackgroundPainter extends CustomPainter {
   ConstellationSkyBackgroundPainter(
       this.image, this.boxOffset, this.boxSize, this.mqData, this.containerKey, this.gridKey);
@@ -78,6 +79,5 @@ class ConstellationSkyBackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant ConstellationSkyBackgroundPainter oldDelegate) {
     return true;
-    // return oldDelegate.image != image;
   }
 }
