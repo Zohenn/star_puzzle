@@ -77,6 +77,13 @@ class InfoDialog extends StatelessWidget {
                 const SelectableText(_licenseText),
                 const SizedBox(height: 24.0),
                 const Text('Special thanks to my wonderful girlfriend.'),
+                const SizedBox(height: 24.0),
+                TextButton(
+                  onPressed: () {
+                    showLicensePage(context: context, applicationName: 'Stazzle');
+                  },
+                  child: Text('Show licenses'),
+                ),
               ],
             ),
           ),

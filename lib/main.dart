@@ -9,8 +9,14 @@ import 'package:star_puzzle/widgets/theme_provider.dart';
 
 void main() async {
   LicenseRegistry.addLicense(() async* {
-    final license = await rootBundle.loadString('google_fonts/OFL.txt');
-    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+    final licenses = [
+      await rootBundle.loadString('google_fonts/JosefinSlab.txt'),
+      await rootBundle.loadString('google_fonts/Poppins.txt'),
+      await rootBundle.loadString('google_fonts/Raleway.txt'),
+    ];
+    for (var license in licenses) {
+      yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+    }
   });
 
   WidgetsFlutterBinding.ensureInitialized();

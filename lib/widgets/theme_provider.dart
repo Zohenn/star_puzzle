@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 const cornsilk = Color(0xfffff8dc);
 const _backgroundColor = Color(0xff081229);
+const _backgroundColorDark = Color(0xff071024);
 
 final _textTheme = GoogleFonts.ralewayTextTheme(Typography.material2018().white.apply(bodyColor: cornsilk));
 
@@ -22,8 +23,17 @@ class ThemeProvider extends StatelessWidget {
       data: ThemeData(
         visualDensity: VisualDensity.adaptivePlatformDensity,
         backgroundColor: _backgroundColor,
+        scaffoldBackgroundColor: _backgroundColor,
+        cardColor: _backgroundColor,
         applyElevationOverlayColor: true,
         textTheme: _textTheme,
+        appBarTheme: const AppBarTheme(
+          color: _backgroundColorDark
+        ),
+        listTileTheme: const ListTileThemeData(
+          selectedColor: Colors.white,
+        ),
+        toggleableActiveColor: Colors.white,
         // textTheme: Typography.material2018().white,
         cardTheme: CardTheme(
           margin: EdgeInsets.zero,
